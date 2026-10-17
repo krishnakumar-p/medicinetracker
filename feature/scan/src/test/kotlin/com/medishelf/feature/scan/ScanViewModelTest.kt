@@ -19,7 +19,8 @@ import java.time.LocalDate
 @RunWith(RobolectricTestRunner::class)
 class ScanViewModelTest {
     private val time = TestTimeProvider()
-    private fun vm(mode: ScanMode) = ScanViewModel(SavedStateHandle(route = ScanRoute(mode)), time)
+    @get:org.junit.Rule val main = com.medishelf.core.testing.MainDispatcherRule()
+    private fun vm(mode: ScanMode) = ScanViewModel(SavedStateHandle(route = ScanRoute(mode)), time, main.testDispatcher)
     private fun side(vararg lines: Pair<String, Int>, barcodes: List<String> = emptyList()) =
         SideReading(lines.map { RecognizedLine(it.first, it.second) }, barcodes)
 

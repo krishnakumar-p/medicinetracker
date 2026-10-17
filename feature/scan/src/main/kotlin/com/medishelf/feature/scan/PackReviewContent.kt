@@ -17,6 +17,13 @@ import androidx.compose.material3.FilterChip
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Switch
+import androidx.compose.material3.TextButton
+import androidx.compose.foundation.text.selection.SelectionContainer
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.Alignment
@@ -79,6 +86,21 @@ internal fun PackReviewContent(
         ChoiceGroup(stringResource(R.string.feature_scan_field_storage), s.storageNotes, sel.storage, { it }) { v ->
             onSelectionChange { it.copy(storage = v) }
         }
+        ChoiceGroup(stringResource(R.string.feature_scan_field_use_within), s.useWithinDays, sel.useWithinDays, {
+            pluralStringResource(R.plurals.feature_scan_days, it, it)
+        }) { v -> onSelectionChange { it.copy(useWithinDays = v) } }
+        ChoiceGroup(stringResource(R.string.feature_scan_field_patient), s.patientNames, sel.patientName, { it }) { v ->
+            onSelectionChange { it.copy(patientName = v) }
+        }
+        ChoiceGroup(stringResource(R.string.feature_scan_field_condition), s.conditions, sel.condition, { it }) { v ->
+            onSelectionChange { it.copy(condition = v) }
+        }
+        ChoiceGroup(stringResource(R.string.feature_scan_field_prescriber), s.prescribers, sel.prescribedBy, { it }) { v ->
+            onSelectionChange { it.copy(prescribedBy = v) }
+        }
+        ChoiceGroup(stringResource(R.string.feature_scan_field_prescription_date), s.prescriptionDates, sel.prescriptionDate, { it.formatMedium() }) { v ->
+            onSelectionChange { it.copy(prescriptionDate = v) }
+        }
         if (s.isPrescription) {
             Row(
                 Modifier
@@ -92,11 +114,31 @@ internal fun PackReviewContent(
                 Switch(checked = sel.isPrescription, onCheckedChange = null)
             }
         }
+        RawText(s.rawText)
         Row(Modifier.fillMaxWidth().padding(16.dp), horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             OutlinedButton(onClick = onRetake, modifier = Modifier.weight(1f)) { Text(stringResource(R.string.feature_scan_retake)) }
             Button(onClick = onConfirm, modifier = Modifier.weight(1f).testTag("use_selected")) {
                 Text(stringResource(R.string.feature_scan_use_selected))
             }
+        }
+    }
+}
+
+/** Everything OCR read, collapsed by default, so the user can see why a field was or wasn't filled. */
+@Composable
+private fun RawText(text: String) {
+    if (text.isBlank()) return
+    var expanded by rememberSaveable { mutableStateOf(false) }
+    TextButton(onClick = { expanded = !expanded }, modifier = Modifier.padding(horizontal = 8.dp)) {
+        Text(stringResource(if (expanded) R.string.feature_scan_hide_raw else R.string.feature_scan_show_raw))
+    }
+    if (expanded) {
+        SelectionContainer {
+            Text(
+                text,
+                style = MaterialTheme.typography.bodySmall.copy(fontFamily = FontFamily.Monospace),
+                modifier = Modifier.padding(horizontal = 16.dp),
+            )
         }
     }
 }

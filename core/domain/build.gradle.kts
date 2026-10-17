@@ -5,6 +5,7 @@ plugins {
 dependencies {
     api(projects.core.model)
     api(projects.core.common)
+    implementation(projects.core.nlp)
     implementation(libs.javax.inject)
 
     testImplementation(projects.core.testing)

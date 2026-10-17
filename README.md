@@ -19,10 +19,17 @@ have, who it is for and for which condition, where it is kept, and when it expir
 - **Scan pack (on-device only)**: photograph each side of the box; every photo gets full OCR
   plus barcode/DataMatrix detection, and the results from all sides are merged. Brand name,
   active ingredients, strength, form, pack size, manufacturer, expiry, batch, prescription-only
-  marking, dosage directions, storage notes and barcode are offered on one review screen,
-  and the editor marks every filled field for the user to check before saving. GS1 DataMatrix
-  expiry and batch take priority over OCR, and a barcode seen before prefills from the saved pack.
-  A quick **barcode only** scan is also available.
+  marking, dosage directions, storage notes, "use within N days of opening" and barcode are
+  offered on one review screen. Pharmacy stickers also yield the patient (matched to a family
+  member, with the condition), prescriber and dispensing date; a "keep in a fridge" note picks
+  a fridge location. The editor marks every filled field for the user to check before saving,
+  and the review screen can show the raw OCR text. GS1 DataMatrix expiry and batch take
+  priority over OCR, and a barcode seen before prefills from the saved pack. A quick
+  **barcode only** scan is also available.
+- **On-device medicine NLP** (`core:nlp`): a dictionary entity recogniser finds ingredients,
+  brands and manufacturers even on packs with no "Active ingredient:" style keywords. It
+  matches multi-word names longest-first and tolerates OCR errors (`PARACETAM0L`,
+  `Amoxicilin`) through digit/letter repair and a Levenshtein BK-tree. Nothing is downloaded.
 - **Lifecycle and history**: mark used (reduces quantity), finished, disposed or restore.
   Records are never hard-deleted; every change is logged. Safe-disposal guidance is shown for
   expired items.
@@ -85,8 +92,9 @@ targets, labels) against the real app. It expects a fresh install:
 adb uninstall com.medishelf.debug; ./gradlew :app:connectedDebugAndroidTest
 ```
 
-The pack-scan device test renders a box side with text and a real EAN-13 barcode and runs
-the bundled ML Kit OCR and barcode models plus the parser over it:
+The pack-scan device tests render a box side (with a real EAN-13 barcode) and a keyword-free
+box with a pharmacy sticker, and run the bundled ML Kit OCR and barcode models plus the
+parser over them:
 
 ```bash
 ./gradlew :feature:scan:connectedDebugAndroidTest
@@ -161,6 +169,7 @@ app/                      MainActivity, root gate, NavHost, Application (WorkMan
 build-logic/convention/   Gradle convention plugins (android app/library, compose, hilt, room, feature, jvm)
 core/
   model/ common/ domain/  pure Kotlin: entities, rules, use cases, parsers, planners
+  nlp/                    pure Kotlin: medicine lexicons and OCR-tolerant entity recogniser
   database/ datastore/    Room + SQLCipher, DataStore (settings, lock state, reminder ledger)
   data/ backup/           repositories, photo store, SAF documents, demo data, backup service
   security/               database key, PIN hashing, lock manager, biometrics
@@ -169,6 +178,24 @@ core/
   testing/                fakes and test helpers
 feature/                  dashboard, medicines, scan, locations, family, settings, lock, onboarding
 gradle/libs.versions.toml version catalog
+scripts/                  build_lexicon.py (refreshes the FDA lexicons)
+```
+
+### Medicine lexicons
+
+`core/nlp/src/main/resources/medishelf/lexicon/` holds the dictionaries (~13k entries, ~150 KB):
+
+- `fda_*.txt`: ingredients, brand names and companies from the US FDA
+  [Drugs@FDA](https://www.fda.gov/drugs/drug-approvals-and-databases/drugsfda-data-files)
+  data files, which are public domain.
+- `curated_*.txt`: INN names (paracetamol, salbutamol, …) and brands and manufacturers common
+  outside the US (Panadol, Adol, Julphar, Hikma, …).
+- `synonyms.txt`: INN/USAN pairs such as `PARACETAMOL = ACETAMINOPHEN`.
+
+To refresh the FDA lists, download and unzip the Drugs@FDA data files, then run:
+
+```bash
+python3 scripts/build_lexicon.py path/to/drugsatfda path/to/core/nlp/src/main/resources/medishelf/lexicon
 ```
 
 ## Signed releases
@@ -249,6 +276,8 @@ When updating an action, pin the new release's SHA, not a moving tag.
 
 ## Known limitations
 
+- Ingredient, brand and manufacturer recognition only knows names in the lexicons; an
+  unlisted local brand is still offered from the largest text on the pack, but may rank lower.
 - Pack OCR uses ML Kit's Latin-script model. It is tested against realistic label text and a
   rendered box on a device, but not yet against a wide range of real, glossy or curved packs.
 - Biometric unlock and the Android 8–10 forgot-PIN path have not been tried on physical

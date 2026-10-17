@@ -25,13 +25,17 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
 /** Fields filled by a camera scan; the editor flags them for the user to check. */
-enum class ScannedField { BARCODE, NAME, GENERIC, STRENGTH, FORM, QUANTITY, MANUFACTURER, EXPIRY, BATCH, PRESCRIPTION, DOSAGE, NOTES }
+enum class ScannedField {
+    BARCODE, NAME, GENERIC, STRENGTH, FORM, QUANTITY, MANUFACTURER, EXPIRY, BATCH, PRESCRIPTION, DOSAGE, NOTES,
+    USE_WITHIN, PRESCRIBER, PRESCRIPTION_DATE, PURCHASE_DATE, PEOPLE, LOCATION,
+}
 
 data class MedicineEditUiState(
     val isLoading: Boolean = true,
@@ -60,8 +64,8 @@ private data class EditMeta(
 class MedicineEditViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val medicines: MedicineRepository,
-    members: FamilyMemberRepository,
-    locations: StorageLocationRepository,
+    private val members: FamilyMemberRepository,
+    private val locations: StorageLocationRepository,
     suggestions: ConditionSuggestionRepository,
     private val findPrefill: FindPrefillByBarcodeUseCase,
     private val saveMedicine: SaveMedicineUseCase,
@@ -115,6 +119,9 @@ class MedicineEditViewModel @Inject constructor(
      */
     private suspend fun applyScan(scan: ScanSuggestion) {
         val prefill = scan.barcode?.let { findPrefill(it) }
+        val patient = scan.patientName?.let { name -> matchMember(name, members.observeAll().first()) }
+        val fridge = locations.observeAll().first().firstOrNull { it.requiresRefrigeration }
+        val needsFridge = scan.storageNote?.let(::mentionsRefrigeration) == true
         val scanned = mutableSetOf<ScannedField>()
         form.update { current ->
             scanned.clear()
@@ -147,6 +154,28 @@ class MedicineEditViewModel @Inject constructor(
                 scanned += ScannedField.QUANTITY
             }
             if (scan.isPrescription == true && !f.isPrescription) { f = f.copy(isPrescription = true); scanned += ScannedField.PRESCRIPTION }
+            scan.useWithinDays?.takeIf { f.useWithinText.isBlank() }?.let { f = f.copy(useWithinText = it.toString()); scanned += ScannedField.USE_WITHIN }
+            fill(ScannedField.PRESCRIBER, scan.prescribedBy, f.prescribedBy.isBlank()) { f = f.copy(prescribedBy = it) }
+            scan.prescriptionDate?.let { dispensed ->
+                // A dispensing date is also when the pack was bought.
+                if (f.prescriptionDate == null) { f = f.copy(prescriptionDate = dispensed); scanned += ScannedField.PRESCRIPTION_DATE }
+                if (f.purchaseDate == null) { f = f.copy(purchaseDate = dispensed); scanned += ScannedField.PURCHASE_DATE }
+            }
+            // Pharmacy label names the patient: tick that family member, with the condition if known.
+            if (patient != null && patient.id !in f.assignments) {
+                f = f.copy(assignments = f.assignments + (patient.id to scan.condition.orEmpty()))
+                scanned += ScannedField.PEOPLE
+            } else {
+                scan.condition?.let { condition ->
+                    // No patient on the label: give the condition to the one ticked person without one.
+                    val blank = f.assignments.filterValues(String::isBlank).keys
+                    if (blank.size == 1) { f = f.copy(assignments = f.assignments + (blank.first() to condition)); scanned += ScannedField.PEOPLE }
+                }
+            }
+            if (needsFridge && fridge != null && f.storageLocationId == null) {
+                f = f.copy(storageLocationId = fridge.id)
+                scanned += ScannedField.LOCATION
+            }
             scan.expiryDate?.let { f = f.copy(expiryDate = it); scanned += ScannedField.EXPIRY }
             scan.batchNumber?.let { f = f.copy(batchNumber = it); scanned += ScannedField.BATCH }
             f
@@ -175,3 +204,14 @@ class MedicineEditViewModel @Inject constructor(
         }
     }
 }
+
+/** Family member whose name matches the label: full name, or same first name. */
+internal fun matchMember(labelName: String, candidates: List<FamilyMember>): FamilyMember? {
+    val wanted = labelName.trim().lowercase()
+    candidates.firstOrNull { it.name.trim().lowercase() == wanted }?.let { return it }
+    val first = wanted.substringBefore(' ')
+    return candidates.filter { it.name.trim().lowercase().substringBefore(' ') == first }.singleOrNull()
+}
+
+private fun mentionsRefrigeration(note: String): Boolean =
+    Regex("""refrigerat|fridge|2\s*°?\s*c?\s*(?:-|–|to)\s*8\s*°""", RegexOption.IGNORE_CASE).containsMatchIn(note)

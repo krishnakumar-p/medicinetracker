@@ -42,4 +42,15 @@
         <item quantity="one">Read from %d photo. Check each field against the pack and pick the right value, or choose "Don\'t fill".</item>
         <item quantity="other">Read from %d photos. Check each field against the pack and pick the right value, or choose "Don\'t fill".</item>
     </plurals>
+    <string name="feature_scan_field_use_within">Use within, once opened</string>
+    <string name="feature_scan_field_patient">Patient (from pharmacy label)</string>
+    <string name="feature_scan_field_condition">Condition</string>
+    <string name="feature_scan_field_prescriber">Prescribed by</string>
+    <string name="feature_scan_field_prescription_date">Prescription / dispensing date</string>
+    <string name="feature_scan_show_raw">Show what the camera read</string>
+    <string name="feature_scan_hide_raw">Hide what the camera read</string>
+    <plurals name="feature_scan_days">
+        <item quantity="one">%d day</item>
+        <item quantity="other">%d days</item>
+    </plurals>
 </resources>

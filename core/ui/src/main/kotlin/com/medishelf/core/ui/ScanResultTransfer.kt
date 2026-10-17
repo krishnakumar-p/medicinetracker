@@ -32,6 +32,11 @@ object ScanResultTransfer {
             result.isPrescription?.toString(),
             result.dosageInstructions,
             result.storageNote,
+            result.useWithinDays?.toString(),
+            result.prescribedBy,
+            result.prescriptionDate?.toString(),
+            result.patientName,
+            result.condition,
         )
     }
 
@@ -54,6 +59,11 @@ object ScanResultTransfer {
                     isPrescription = v.getOrNull(10)?.toBooleanStrictOrNull(),
                     dosageInstructions = v.getOrNull(11),
                     storageNote = v.getOrNull(12),
+                    useWithinDays = v.getOrNull(13)?.toIntOrNull(),
+                    prescribedBy = v.getOrNull(14),
+                    prescriptionDate = v.getOrNull(15)?.let(LocalDate::parse),
+                    patientName = v.getOrNull(16),
+                    condition = v.getOrNull(17),
                 )
             }
 }

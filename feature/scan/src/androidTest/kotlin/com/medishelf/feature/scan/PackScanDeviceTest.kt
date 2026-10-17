@@ -52,6 +52,59 @@ class PackScanDeviceTest {
         }
     }
 
+    /** No section keywords at all, plus a pharmacy sticker: the lexicon-based recogniser's job. */
+    @Test
+    fun keywordFreeBoxWithPharmacySticker_yieldsIngredientsCompanyAndLabelFields() = runBlocking {
+        val recognizer = createTextRecognizer()
+        val scanner = createBarcodeScanner()
+        try {
+            val image = render(
+                listOf(
+                    "Brufen" to 120f,
+                    "IBUPROFEN 400MG" to 56f,
+                    "30 film-coated tablets" to 44f,
+                    "For the relief of pain and fever." to 34f,
+                    "Abbott Laboratories Ltd" to 32f,
+                    "" to 30f,
+                    "Patient: SARA AHMED" to 36f,
+                    "Dr. Hana Saleh" to 36f,
+                    "Date: 12/01/2026" to 36f,
+                    "Take 1 tablet three times a day after food" to 32f,
+                ),
+            )
+            val reading = analyzeStill(InputImage.fromBitmap(image, 0), recognizer, scanner)
+            val result = LabelTextParser.parse(reading.lines, LocalDate.now())
+
+            assertThat(result.names.first()).isEqualTo("Brufen")
+            assertThat(result.genericNames.first()).isEqualTo("Ibuprofen")
+            assertThat(result.strengths.first()).isEqualTo("400 mg")
+            assertThat(result.quantities.first()).isEqualTo(PackQuantity(30.0, QuantityUnit.TABLETS))
+            assertThat(result.manufacturers.first()).startsWith("Abbott")
+            assertThat(result.conditions.first()).isEqualTo("Pain and fever")
+            assertThat(result.patientNames.first()).isEqualTo("Sara Ahmed")
+            assertThat(result.prescribers.first()).isEqualTo("Dr. Hana Saleh")
+            assertThat(result.prescriptionDates.first()).isEqualTo(LocalDate.of(2026, 1, 12))
+            assertThat(result.dosageInstructions.first()).startsWith("Take 1 tablet three times a day")
+        } finally {
+            recognizer.close()
+            scanner.close()
+        }
+    }
+
+    private fun render(lines: List<Pair<String, Float>>): Bitmap {
+        val bitmap = Bitmap.createBitmap(1400, 2000, Bitmap.Config.ARGB_8888)
+        val canvas = Canvas(bitmap).apply { drawColor(Color.WHITE) }
+        val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply { color = Color.BLACK }
+        var y = 170f
+        lines.forEach { (text, size) ->
+            paint.textSize = size
+            paint.typeface = if (size >= 100f) Typeface.DEFAULT_BOLD else Typeface.DEFAULT
+            canvas.drawText(text, 80f, y, paint)
+            y += size * 1.6f
+        }
+        return bitmap
+    }
+
     private fun renderPackSide(): Bitmap {
         val bitmap = Bitmap.createBitmap(1400, 2000, Bitmap.Config.ARGB_8888)
         val canvas = Canvas(bitmap).apply { drawColor(Color.WHITE) }

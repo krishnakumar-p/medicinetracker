@@ -165,7 +165,11 @@ class MedicineViewModelsTest {
             assertThat(dosageInstructions).isEqualTo("5 ml twice daily")
             assertThat(notes).isEqualTo("Store in a refrigerator (2°C – 8°C).")
         }
-        assertThat(state.scannedFields).containsExactlyElementsIn(ScannedField.entries)
+        assertThat(state.scannedFields).containsExactly(
+            ScannedField.BARCODE, ScannedField.NAME, ScannedField.GENERIC, ScannedField.STRENGTH, ScannedField.FORM,
+            ScannedField.QUANTITY, ScannedField.MANUFACTURER, ScannedField.EXPIRY, ScannedField.BATCH,
+            ScannedField.PRESCRIPTION, ScannedField.DOSAGE, ScannedField.NOTES,
+        )
         // Nothing saved until the user confirms in the editor.
         assertThat(f.medicines.events.value).isEmpty()
     }
@@ -189,5 +193,50 @@ class MedicineViewModelsTest {
         assertThat(state.scannedFields).containsExactly(ScannedField.STRENGTH, ScannedField.EXPIRY)
         // Delivered once: the handle no longer holds the result.
         assertThat(handle.get<ArrayList<String?>>("medishelf.scan_result")).isNull()
+    }
+
+    @Test
+    fun edit_pharmacyLabelScan_assignsPatientWithCondition_andPicksFridge() = runTest(mainDispatcherRule.testDispatcher) {
+        val sara = f.members.save(testMember(name = "Sara Ahmed"))
+        f.members.save(testMember(name = "Omar"))
+        f.locations.save(com.medishelf.core.testing.testLocation(name = "Kitchen"))
+        val fridge = f.locations.save(com.medishelf.core.testing.testLocation(name = "Fridge door").copy(requiresRefrigeration = true))
+        val handle = androidx.lifecycle.SavedStateHandle(route = MedicineEditRoute())
+        val vm = f.editViewModel(savedStateHandle = handle)
+        backgroundScope.launch { vm.uiState.collect {} }
+        val dispensed = java.time.LocalDate.of(2026, 1, 12)
+
+        com.medishelf.core.ui.ScanResultTransfer.put(
+            handle,
+            com.medishelf.core.model.ScanSuggestion(
+                genericName = "Amoxicillin", patientName = "SARA AHMED", condition = "Ear infection",
+                prescribedBy = "Dr. Hana Saleh", prescriptionDate = dispensed, useWithinDays = 14,
+                storageNote = "Store in a refrigerator (2°C – 8°C).",
+            ),
+        )
+
+        val state = vm.uiState.value
+        with(state.form) {
+            assertThat(assignments).containsExactly(sara, "Ear infection")
+            assertThat(storageLocationId).isEqualTo(fridge)
+            assertThat(useWithinText).isEqualTo("14")
+            assertThat(prescribedBy).isEqualTo("Dr. Hana Saleh")
+            assertThat(prescriptionDate).isEqualTo(dispensed)
+            assertThat(purchaseDate).isEqualTo(dispensed)
+        }
+        assertThat(state.scannedFields).containsAtLeast(
+            ScannedField.PEOPLE, ScannedField.LOCATION, ScannedField.USE_WITHIN,
+            ScannedField.PRESCRIBER, ScannedField.PRESCRIPTION_DATE, ScannedField.PURCHASE_DATE,
+        )
+    }
+
+    @Test
+    fun matchMember_byFullOrUniqueFirstName() {
+        val members = listOf(testMember(id = 1, name = "Sara Ahmed"), testMember(id = 2, name = "Omar"), testMember(id = 3, name = "Omar Ali"))
+        assertThat(com.medishelf.feature.medicines.edit.matchMember("sara ahmed", members)?.id).isEqualTo(1)
+        assertThat(com.medishelf.feature.medicines.edit.matchMember("Sara K.", members)?.id).isEqualTo(1)
+        assertThat(com.medishelf.feature.medicines.edit.matchMember("Omar", members)?.id).isEqualTo(2) // exact beats ambiguity
+        assertThat(com.medishelf.feature.medicines.edit.matchMember("Omar Hassan", members)).isNull() // two Omars
+        assertThat(com.medishelf.feature.medicines.edit.matchMember("Layla", members)).isNull()
     }
 }

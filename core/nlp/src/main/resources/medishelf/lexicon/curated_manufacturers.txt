@@ -1,0 +1,107 @@
+# Manufacturers and marketing-authorisation holders as printed on packs.
+GlaxoSmithKline
+GSK
+Haleon
+Pfizer
+Novartis
+Sandoz
+Sanofi
+Sanofi-Aventis
+Opella Healthcare
+AstraZeneca
+Bayer
+Abbott
+AbbVie
+MSD
+Merck Sharp & Dohme
+Merck
+Johnson & Johnson
+Janssen
+Kenvue
+Roche
+Hoffmann-La Roche
+Boehringer Ingelheim
+Novo Nordisk
+Eli Lilly
+Lilly
+Teva
+Viatris
+Mylan
+Upjohn
+Organon
+Sun Pharma
+Sun Pharmaceutical Industries
+Cipla
+Dr. Reddy's
+Dr. Reddy's Laboratories
+Lupin
+Glenmark
+Zydus
+Cadila
+Torrent
+Alkem
+Ajanta
+Hikma
+Julphar
+Gulf Pharmaceutical Industries
+Neopharma
+Globalpharma
+Pharmax
+Medpharma
+SPIMACO
+Tabuk Pharmaceuticals
+Jamjoom Pharma
+Al-Hikma
+Dar Al Dawa
+Pharmaline
+Amoun
+EIPICO
+Pharco
+Kuwait Saudi Pharmaceutical Industries
+Bristol-Myers Squibb
+Takeda
+Servier
+Menarini
+Berlin-Chemie
+Recordati
+Pierre Fabre
+LEO Pharma
+Galderma
+Reckitt
+Reckitt Benckiser
+Bausch & Lomb
+Bausch Health
+Zentiva
+Stada
+Krka
+Gedeon Richter
+Egis
+Acino
+Amgen
+Gilead
+Astellas
+Eisai
+Daiichi Sankyo
+Otsuka
+Chiesi
+Ipsen
+Lundbeck
+UCB
+Perrigo
+Procter & Gamble
+Mundipharma
+Grünenthal
+Dermapharm
+Bionorica
+Engelhard Arzneimittel
+Hexal
+Ratiopharm
+Actavis
+Accord Healthcare
+Aurobindo
+Ranbaxy
+Wockhardt
+Micro Labs
+Mankind Pharma
+Intas
+Biocon

@@ -2,7 +2,10 @@ package com.medishelf.feature.scan
 
 import androidx.lifecycle.SavedStateHandle
 import androidx.lifecycle.ViewModel
+import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
+import com.medishelf.core.common.Dispatcher
+import com.medishelf.core.common.MediShelfDispatchers
 import com.medishelf.core.common.TimeProvider
 import com.medishelf.core.domain.scan.BarcodeNormalizer
 import com.medishelf.core.domain.scan.Gs1Parser
@@ -14,7 +17,11 @@ import com.medishelf.core.model.RecognizedLine
 import com.medishelf.core.model.ScanSuggestion
 import com.medishelf.feature.scan.navigation.ScanMode
 import com.medishelf.feature.scan.navigation.ScanRoute
+import com.medishelf.core.nlp.MedicineLexicon
 import dagger.hilt.android.lifecycle.HiltViewModel
+import kotlinx.coroutines.CoroutineDispatcher
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.withContext
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -36,6 +43,11 @@ data class PackSelection(
     val isPrescription: Boolean = false,
     val dosage: String? = null,
     val storage: String? = null,
+    val useWithinDays: Int? = null,
+    val prescribedBy: String? = null,
+    val prescriptionDate: LocalDate? = null,
+    val patientName: String? = null,
+    val condition: String? = null,
 )
 
 sealed interface ScanUiState {
@@ -59,6 +71,7 @@ data class SideReading(val lines: List<RecognizedLine>, val barcodes: List<Strin
 class ScanViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     private val time: TimeProvider,
+    @Dispatcher(MediShelfDispatchers.DEFAULT) private val compute: CoroutineDispatcher,
 ) : ViewModel() {
     val mode: ScanMode = savedStateHandle.toRoute<ScanRoute>().mode
 
@@ -67,6 +80,11 @@ class ScanViewModel @Inject constructor(
 
     private val lines = mutableListOf<RecognizedLine>()
     private val barcodes = linkedSetOf<String>()
+
+    init {
+        // Load the ~10k-entry medical dictionaries while the user frames the first photo.
+        if (mode == ScanMode.PACK) viewModelScope.launch(compute) { MedicineLexicon.default }
+    }
 
     /** Live analyzer callback (any thread). */
     fun onBarcode(rawValue: String) {
@@ -103,9 +121,18 @@ class ScanViewModel @Inject constructor(
 
     /** All sides photographed: merge OCR from every side with the barcode(s) into one review. */
     fun onFinishPack() {
-        val sides = (state.value as? ScanUiState.Camera)?.sides ?: return
+        val camera = state.value as? ScanUiState.Camera ?: return
+        if (camera.reading) return
+        state.value = camera.copy(reading = true)
+        val captured = lines.toList()
+        viewModelScope.launch {
+            state.value = withContext(compute) { review(captured, camera.sides) }
+        }
+    }
+
+    private fun review(captured: List<RecognizedLine>, sides: Int): ScanUiState {
         val today = time.today()
-        var suggestions = LabelTextParser.parse(lines, today)
+        var suggestions = LabelTextParser.parse(captured, today)
         val raw = synchronized(barcodes) { barcodes.toList() }
         // GS1 DataMatrix is machine-printed data: its expiry and batch beat OCR guesses.
         val gs1 = raw.firstNotNullOfOrNull { Gs1Parser.parse(it, today) }
@@ -114,11 +141,7 @@ class ScanViewModel @Inject constructor(
             expiryDates = (listOfNotNull(gs1?.expiry) + suggestions.expiryDates).distinct(),
             batchNumbers = (listOfNotNull(gs1?.batch) + suggestions.batchNumbers).distinct(),
         )
-        state.value = if (suggestions.isEmpty) {
-            ScanUiState.NothingRead
-        } else {
-            ScanUiState.Review(suggestions, suggestions.bestGuess(), sides)
-        }
+        return if (suggestions.isEmpty) ScanUiState.NothingRead else ScanUiState.Review(suggestions, suggestions.bestGuess(), sides)
     }
 
     fun onSelectionChange(transform: (PackSelection) -> PackSelection) = state.update {
@@ -143,6 +166,11 @@ class ScanViewModel @Inject constructor(
                 isPrescription = true.takeIf { s.isPrescription },
                 dosageInstructions = s.dosage,
                 storageNote = s.storage,
+                useWithinDays = s.useWithinDays,
+                prescribedBy = s.prescribedBy,
+                prescriptionDate = s.prescriptionDate,
+                patientName = s.patientName,
+                condition = s.condition,
             ),
         )
     }
@@ -176,4 +204,9 @@ private fun LabelSuggestions.bestGuess() = PackSelection(
     isPrescription = isPrescription,
     dosage = dosageInstructions.firstOrNull(),
     storage = storageNotes.firstOrNull(),
+    useWithinDays = useWithinDays.firstOrNull(),
+    prescribedBy = prescribers.firstOrNull(),
+    prescriptionDate = prescriptionDates.firstOrNull(),
+    patientName = patientNames.firstOrNull(),
+    condition = conditions.firstOrNull(),
 )

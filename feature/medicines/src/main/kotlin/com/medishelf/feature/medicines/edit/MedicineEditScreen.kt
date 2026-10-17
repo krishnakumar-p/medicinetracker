@@ -229,6 +229,7 @@ internal fun MedicineEditContent(state: MedicineEditUiState, actions: MedicineEd
                     date = form.purchaseDate,
                     onDateChange = { v -> update { it.copy(purchaseDate = v) } },
                     errorText = errors.messageFor(PURCHASE_IN_FUTURE),
+                    supportingText = scannedNote(ScannedField.PURCHASE_DATE in state.scannedFields),
                 )
                 DateField(
                     label = stringResource(R.string.feature_medicines_field_opened),
@@ -241,12 +242,16 @@ internal fun MedicineEditContent(state: MedicineEditUiState, actions: MedicineEd
                     value = form.useWithinText,
                     onValueChange = { v -> update { it.copy(useWithinText = v) } },
                     error = errors.messageFor(USE_WITHIN_NOT_POSITIVE),
-                    supporting = stringResource(R.string.feature_medicines_use_within_help),
+                    supporting = scannedNote(ScannedField.USE_WITHIN in state.scannedFields)
+                        ?: stringResource(R.string.feature_medicines_use_within_help),
                     keyboardType = KeyboardType.Number,
                 )
             }
 
             FormCard(stringResource(R.string.feature_medicines_section_people)) {
+                scannedNote(ScannedField.PEOPLE in state.scannedFields)?.let {
+                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
                 if (state.members.isEmpty()) {
                     Text(stringResource(R.string.feature_medicines_no_members), style = MaterialTheme.typography.bodyMedium)
                 }
@@ -295,6 +300,7 @@ internal fun MedicineEditContent(state: MedicineEditUiState, actions: MedicineEd
                     label = stringResource(R.string.feature_medicines_field_prescribed_by),
                     value = form.prescribedBy,
                     onValueChange = { v -> update { it.copy(prescribedBy = v) } },
+                    supporting = scannedNote(ScannedField.PRESCRIBER in state.scannedFields),
                     capitalization = KeyboardCapitalization.Words,
                 )
                 DateField(
@@ -302,6 +308,7 @@ internal fun MedicineEditContent(state: MedicineEditUiState, actions: MedicineEd
                     date = form.prescriptionDate,
                     onDateChange = { v -> update { it.copy(prescriptionDate = v) } },
                     errorText = errors.messageFor(PRESCRIPTION_IN_FUTURE),
+                    supportingText = scannedNote(ScannedField.PRESCRIPTION_DATE in state.scannedFields),
                 )
                 TextInput(
                     label = stringResource(R.string.feature_medicines_field_dosage),
@@ -324,6 +331,9 @@ internal fun MedicineEditContent(state: MedicineEditUiState, actions: MedicineEd
                     },
                     onSelect = { v -> update { it.copy(storageLocationId = v) } },
                 )
+                scannedNote(ScannedField.LOCATION in state.scannedFields)?.let {
+                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
                 TextInput(
                     label = stringResource(R.string.feature_medicines_field_notes),
                     value = form.notes,
