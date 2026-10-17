@@ -1,0 +1,171 @@
+package com.medishelf.feature.medicines
+
+import com.google.common.truth.Truth.assertThat
+import com.medishelf.core.domain.validation.MedicineValidationError
+import com.medishelf.core.model.MedicineStatus
+import com.medishelf.core.model.PhotoType
+import com.medishelf.core.testing.MainDispatcherRule
+import com.medishelf.core.testing.testMedicine
+import com.medishelf.core.testing.testMember
+import com.medishelf.feature.medicines.detail.DetailMessage
+import com.medishelf.feature.medicines.edit.ScannedField
+import androidx.navigation.testing.invoke
+import com.medishelf.feature.medicines.navigation.MedicineEditRoute
+import com.medishelf.feature.medicines.navigation.MedicineListPreset
+import com.medishelf.feature.medicines.navigation.MedicineListRoute
+import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runTest
+import org.junit.Rule
+import org.junit.Test
+import org.junit.runner.RunWith
+import org.robolectric.RobolectricTestRunner
+
+@RunWith(RobolectricTestRunner::class)
+class MedicineViewModelsTest {
+    @get:Rule val mainDispatcherRule = MainDispatcherRule()
+    private val f = MedicineTestFixture()
+
+    @Test
+    fun list_lowStockPreset_showsOnlyLowStock_andSearchNarrows() = runTest(mainDispatcherRule.testDispatcher) {
+        f.medicines.put(testMedicine(brandName = "Zyrtec", quantity = 1.0, lowStockThreshold = 5.0))
+        f.medicines.put(testMedicine(brandName = "Panadol", quantity = 30.0, lowStockThreshold = 5.0))
+        f.medicines.put(testMedicine(brandName = "Ventolin", quantity = 1.0, lowStockThreshold = 2.0))
+        val vm = f.listViewModel(MedicineListRoute(MedicineListPreset.LOW_STOCK))
+        backgroundScope.launch { vm.uiState.collect {} }
+
+        assertThat(vm.uiState.value.items.map { it.medicine.brandName }).containsExactly("Zyrtec", "Ventolin")
+        vm.onQueryChange("vent")
+        assertThat(vm.uiState.value.items.map { it.medicine.brandName }).containsExactly("Ventolin")
+        vm.onClearFilters()
+        assertThat(vm.uiState.value.filter.lowStockOnly).isFalse()
+        assertThat(vm.uiState.value.filter.query).isEqualTo("vent")
+    }
+
+    @Test
+    fun edit_showsErrorsOnlyAfterSave_thenSavesValidForm() = runTest(mainDispatcherRule.testDispatcher) {
+        val vm = f.editViewModel()
+        backgroundScope.launch { vm.uiState.collect {} }
+        assertThat(vm.uiState.value.errors).isEmpty()
+
+        vm.onSave()
+        val invalid = vm.uiState.value
+        assertThat(invalid.errors).containsAtLeast(
+            MedicineValidationError.NAME_REQUIRED,
+            MedicineValidationError.QUANTITY_REQUIRED,
+            MedicineValidationError.EXPIRY_REQUIRED,
+        )
+        assertThat(invalid.savedId).isNull()
+
+        // Errors update live once shown.
+        vm.onFormChange { it.copy(brandName = "Panadol", quantityText = "20", expiryDate = f.time.today.plusYears(1)) }
+        assertThat(vm.uiState.value.errors).isEmpty()
+        vm.onSave()
+        val savedId = vm.uiState.value.savedId
+        assertThat(savedId).isNotNull()
+        assertThat(f.medicines.get(savedId!!)!!.medicine.quantity).isEqualTo(20.0)
+    }
+
+    @Test
+    fun edit_assignsMembersWithConditions() = runTest(mainDispatcherRule.testDispatcher) {
+        val sara = f.members.save(testMember(name = "Sara"))
+        val vm = f.editViewModel()
+        vm.onToggleMember(sara)
+        vm.onConditionChange(sara, "Asthma")
+        vm.onFormChange { it.copy(brandName = "Ventolin", quantityText = "1", expiryDate = f.time.today.plusYears(1)) }
+
+        vm.onSave()
+
+        val id = vm.uiState.first { it.savedId != null }.savedId!!
+        assertThat(f.medicines.get(id)!!.assignments.single().condition).isEqualTo("Asthma")
+        assertThat(f.suggestions.recent.value).containsExactly("Asthma")
+    }
+
+    @Test
+    fun edit_withKnownBarcode_prefillsProductFields() = runTest(mainDispatcherRule.testDispatcher) {
+        f.medicines.put(testMedicine(brandName = "Augmentin", barcode = "6281"))
+        val vm = f.editViewModel(MedicineEditRoute(barcode = "6281"))
+
+        val state = vm.uiState.first { !it.isLoading }
+
+        assertThat(state.prefilledFromBarcode).isTrue()
+        assertThat(state.form.brandName).isEqualTo("Augmentin")
+        assertThat(state.form.expiryDate).isNull()
+    }
+
+    @Test
+    fun edit_existingMedicine_loadsIntoForm() = runTest(mainDispatcherRule.testDispatcher) {
+        val id = f.medicines.put(testMedicine(brandName = "Brufen", quantity = 12.0))
+        val vm = f.editViewModel(MedicineEditRoute(id = id))
+
+        val state = vm.uiState.first { !it.isLoading }
+
+        assertThat(state.isNew).isFalse()
+        assertThat(state.form.brandName).isEqualTo("Brufen")
+        assertThat(state.form.quantityText).isEqualTo("12")
+    }
+
+    @Test
+    fun detail_useDisposeAndPhotos() = runTest(mainDispatcherRule.testDispatcher) {
+        val id = f.medicines.put(testMedicine(quantity = 3.0))
+        val vm = f.detailViewModel(id)
+        backgroundScope.launch { vm.uiState.collect {} }
+        assertThat(vm.uiState.value.details!!.medicine.quantity).isEqualTo(3.0)
+
+        vm.onUse(1.0)
+        assertThat(vm.uiState.value.message).isEqualTo(DetailMessage.USED)
+        assertThat(vm.uiState.value.details!!.medicine.quantity).isEqualTo(2.0)
+        vm.onMessageShown()
+
+        vm.onUse(null)
+        assertThat(vm.uiState.value.message).isEqualTo(DetailMessage.INVALID_AMOUNT)
+
+        vm.onAddPhoto(PhotoType.BOX, "content://picker/1")
+        assertThat(vm.uiState.value.photos.single().path).isEqualTo("/fake/photos/photo1.jpg")
+
+        f.photos.failNextImport = true
+        vm.onAddPhoto(PhotoType.STRIP, "content://picker/2")
+        assertThat(vm.uiState.value.message).isEqualTo(DetailMessage.PHOTO_FAILED)
+        assertThat(vm.uiState.value.photos).hasSize(1)
+
+        vm.onMarkDisposed("pharmacy")
+        val disposed = vm.uiState.value
+        assertThat(disposed.details!!.medicine.status).isEqualTo(MedicineStatus.DISPOSED)
+        assertThat(disposed.history.first().note).isEqualTo("pharmacy")
+    }
+
+    @Test
+    fun edit_scanFromDashboardRoute_prefillsAndMarksFields() = runTest(mainDispatcherRule.testDispatcher) {
+        f.medicines.put(testMedicine(brandName = "Augmentin", genericName = "Amoxicillin", barcode = "6281"))
+        val vm = f.editViewModel(MedicineEditRoute(barcode = "6281", expiry = "2027-12-31", batch = "B9"))
+        backgroundScope.launch { vm.uiState.collect {} }
+
+        val state = vm.uiState.value
+        assertThat(state.form.brandName).isEqualTo("Augmentin")
+        assertThat(state.form.expiryDate).isEqualTo(java.time.LocalDate.of(2027, 12, 31))
+        assertThat(state.form.batchNumber).isEqualTo("B9")
+        assertThat(state.scannedFields).containsExactly(ScannedField.BARCODE, ScannedField.EXPIRY, ScannedField.BATCH)
+        assertThat(state.prefilledFromBarcode).isTrue()
+    }
+
+    @Test
+    fun edit_labelResultViaBackStack_keepsTypedName_fillsBlankFields() = runTest(mainDispatcherRule.testDispatcher) {
+        val handle = androidx.lifecycle.SavedStateHandle(route = MedicineEditRoute())
+        val vm = f.editViewModel(savedStateHandle = handle)
+        backgroundScope.launch { vm.uiState.collect {} }
+        vm.onFormChange { it.copy(brandName = "My typed name") }
+
+        com.medishelf.core.ui.ScanResultTransfer.put(
+            handle,
+            com.medishelf.core.model.ScanSuggestion(name = "Brufen", strength = "400 mg", expiryDate = java.time.LocalDate.of(2027, 6, 30)),
+        )
+
+        val state = vm.uiState.value
+        assertThat(state.form.brandName).isEqualTo("My typed name")
+        assertThat(state.form.strength).isEqualTo("400 mg")
+        assertThat(state.form.expiryDate).isEqualTo(java.time.LocalDate.of(2027, 6, 30))
+        assertThat(state.scannedFields).containsExactly(ScannedField.STRENGTH, ScannedField.EXPIRY)
+        // Delivered once: the handle no longer holds the result.
+        assertThat(handle.get<ArrayList<String?>>("medishelf.scan_result")).isNull()
+    }
+}

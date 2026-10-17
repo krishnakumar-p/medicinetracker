@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feature_onboarding_welcome">Welcome to MediShelf</string>
+    <string name="feature_onboarding_intro">Keep track of the medicines in your home: what you have, who it\'s for, where it\'s kept and when it expires.</string>
+    <string name="feature_onboarding_disclaimer_title">Before you start</string>
+    <string name="feature_onboarding_point_not_advice">MediShelf is a record-keeping tool. It does not give medical advice, diagnose conditions or recommend treatment.</string>
+    <string name="feature_onboarding_point_follow_professionals">Always follow your doctor\'s or pharmacist\'s instructions about doses and whether a medicine is right for someone.</string>
+    <string name="feature_onboarding_point_check_labels">Information you enter or scan can be wrong. Check the pack and leaflet before using any medicine.</string>
+    <string name="feature_onboarding_point_emergency">In an emergency or suspected poisoning, call your local emergency number or poison control centre straight away.</string>
+    <string name="feature_onboarding_point_private">Your records stay on this device, encrypted. MediShelf has no internet access, accounts, ads or analytics.</string>
+    <string name="feature_onboarding_understand">I understand MediShelf is not medical advice</string>
+    <string name="feature_onboarding_continue">Continue</string>
+</resources>

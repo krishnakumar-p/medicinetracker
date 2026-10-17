@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feature_lock_title">MediShelf is locked</string>
+    <string name="feature_lock_enter_pin">Enter your PIN</string>
+    <string name="feature_lock_digits_entered">%1$d digits entered</string>
+    <string name="feature_lock_delete_digit">Delete last digit</string>
+    <string name="feature_lock_submit">Unlock</string>
+    <string name="feature_lock_use_biometric">Use fingerprint or face</string>
+    <string name="feature_lock_biometric_title">Unlock MediShelf</string>
+    <string name="feature_lock_use_pin">Use PIN</string>
+    <string name="feature_lock_forgot">Forgot PIN?</string>
+    <string name="feature_lock_recover_title">Confirm it\'s you</string>
+    <string name="feature_lock_recover_body">Use your phone\'s screen lock. App lock will be turned off; your records are kept.</string>
+    <string name="feature_lock_no_screen_lock_title">Can\'t recover without a screen lock</string>
+    <string name="feature_lock_no_screen_lock_body">This phone has no screen lock to confirm your identity. To reset MediShelf, clear its data in system Settings and restore your latest backup.</string>
+    <string name="feature_lock_try_later">Too many attempts. Try again later.</string>
+    <string name="feature_lock_set_title">Set up app lock</string>
+    <string name="feature_lock_change_title">Change PIN</string>
+    <string name="feature_lock_disable_title">Turn off app lock</string>
+    <string name="feature_lock_step_current">Enter your current PIN</string>
+    <string name="feature_lock_step_new">Choose a PIN of %1$d to %2$d digits</string>
+    <string name="feature_lock_step_confirm">Enter the PIN again to confirm</string>
+    <string name="feature_lock_error_length">Use %1$d to %2$d digits</string>
+    <string name="feature_lock_error_simple">That PIN is too easy to guess. Avoid repeated or consecutive digits.</string>
+    <string name="feature_lock_error_mismatch">The PINs didn\'t match. Start again.</string>
+    <string name="feature_lock_settings_title">App lock</string>
+    <string name="feature_lock_settings_intro">Ask for a PIN or biometrics when opening MediShelf. Screenshots and the recent-apps preview are hidden while the lock is on.</string>
+    <string name="feature_lock_turn_on">Turn on app lock</string>
+    <string name="feature_lock_biometric_setting">Unlock with fingerprint or face</string>
+    <string name="feature_lock_biometric_setting_body">Your PIN still works as a backup.</string>
+    <string name="feature_lock_timeout">Lock again after leaving the app for</string>
+    <plurals name="feature_lock_wrong_pin">
+        <item quantity="one">Wrong PIN. %d attempt left before a short wait.</item>
+        <item quantity="other">Wrong PIN. %d attempts left before a short wait.</item>
+    </plurals>
+    <plurals name="feature_lock_locked_out">
+        <item quantity="one">Too many attempts. Try again in %d second.</item>
+        <item quantity="other">Too many attempts. Try again in %d seconds.</item>
+    </plurals>
+    <plurals name="feature_lock_after_seconds">
+        <item quantity="one">%d second</item>
+        <item quantity="other">%d seconds</item>
+    </plurals>
+    <plurals name="feature_lock_after_minutes">
+        <item quantity="one">%d minute</item>
+        <item quantity="other">%d minutes</item>
+    </plurals>
+</resources>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feature_scan_barcode_title">Scan barcode</string>
+    <string name="feature_scan_label_title">Read label</string>
+    <string name="feature_scan_barcode_hint">Point at the barcode or the square code on the box</string>
+    <string name="feature_scan_label_hint">Fit the name and expiry date in the frame, then capture</string>
+    <string name="feature_scan_reading">Reading the label…</string>
+    <string name="feature_scan_capture">Capture</string>
+    <string name="feature_scan_torch">Torch</string>
+    <string name="feature_scan_nothing_title">Couldn\'t read anything useful</string>
+    <string name="feature_scan_nothing_body">Try again with more light and the text filling the frame. You can always type the details instead.</string>
+    <string name="feature_scan_try_again">Try again</string>
+    <string name="feature_scan_no_camera_title">No camera available</string>
+    <string name="feature_scan_no_camera_body">This device has no usable camera. Enter the details by hand instead.</string>
+    <string name="feature_scan_permission_title">Camera access is off</string>
+    <string name="feature_scan_permission_body">MediShelf uses the camera only to read barcodes and labels on this device. Nothing is uploaded. Turn on camera access in Settings to scan.</string>
+    <string name="feature_scan_open_settings">Open Settings</string>
+    <string name="feature_scan_review_intro">Check what was read from the label. Pick the right value for each field, or choose \"Don\'t fill\".</string>
+    <string name="feature_scan_field_name">Name</string>
+    <string name="feature_scan_field_strength">Strength</string>
+    <string name="feature_scan_field_expiry">Expiry date</string>
+    <string name="feature_scan_field_batch">Batch number</string>
+    <string name="feature_scan_dont_fill">Don\'t fill</string>
+    <string name="feature_scan_retake">Retake</string>
+    <string name="feature_scan_use_selected">Use selected</string>
+</resources>

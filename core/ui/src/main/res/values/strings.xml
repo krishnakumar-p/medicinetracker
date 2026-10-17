@@ -1,0 +1,77 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <!-- Common actions -->
+    <string name="core_ui_navigate_up">Navigate up</string>
+    <string name="core_ui_cancel">Cancel</string>
+    <string name="core_ui_ok">OK</string>
+    <string name="core_ui_save">Save</string>
+    <string name="core_ui_delete">Delete</string>
+    <string name="core_ui_edit">Edit</string>
+    <string name="core_ui_clear_field">Clear %1$s</string>
+    <string name="core_ui_pick_date">Choose %1$s</string>
+    <string name="core_ui_none">None</string>
+    <string name="core_ui_unassigned_location">No location set</string>
+    <string name="core_ui_quantity_with_unit">%1$s %2$s</string>
+
+    <!-- Forms -->
+    <string name="core_ui_form_tablet">Tablet</string>
+    <string name="core_ui_form_capsule">Capsule</string>
+    <string name="core_ui_form_syrup">Syrup</string>
+    <string name="core_ui_form_drops">Drops</string>
+    <string name="core_ui_form_inhaler">Inhaler</string>
+    <string name="core_ui_form_injection">Injection</string>
+    <string name="core_ui_form_cream">Cream</string>
+    <string name="core_ui_form_other">Other</string>
+
+    <!-- Units -->
+    <string name="core_ui_unit_tablets">tablets</string>
+    <string name="core_ui_unit_capsules">capsules</string>
+    <string name="core_ui_unit_ml">ml</string>
+    <string name="core_ui_unit_doses">doses</string>
+    <string name="core_ui_unit_grams">g</string>
+    <string name="core_ui_unit_pieces">pieces</string>
+    <string name="core_ui_unit_other">units</string>
+
+    <!-- Statuses -->
+    <string name="core_ui_status_active">Active</string>
+    <string name="core_ui_status_expired">Expired</string>
+    <string name="core_ui_status_finished">Finished</string>
+    <string name="core_ui_status_disposed">Disposed</string>
+    <string name="core_ui_low_stock">Low stock</string>
+    <string name="core_ui_expires_today">Expires today</string>
+    <string name="core_ui_expires_on">Expires %1$s</string>
+    <plurals name="core_ui_expires_in_days">
+        <item quantity="one">Expires in %d day</item>
+        <item quantity="other">Expires in %d days</item>
+    </plurals>
+    <plurals name="core_ui_expired_days_ago">
+        <item quantity="one">Expired %d day ago</item>
+        <item quantity="other">Expired %d days ago</item>
+    </plurals>
+
+    <!-- Photos -->
+    <string name="core_ui_photo_box">Box</string>
+    <string name="core_ui_photo_strip">Strip</string>
+    <string name="core_ui_photo_prescription">Prescription</string>
+
+    <!-- History -->
+    <string name="core_ui_event_created">Added</string>
+    <string name="core_ui_event_edited">Edited</string>
+    <string name="core_ui_event_quantity_used">Used</string>
+    <string name="core_ui_event_status_changed">Status changed</string>
+    <string name="core_ui_event_auto_expired">Expired automatically</string>
+
+    <!-- Filters -->
+    <string name="core_ui_window_any">Any expiry</string>
+    <string name="core_ui_window_expired">Already expired</string>
+    <string name="core_ui_window_7">Within 7 days</string>
+    <string name="core_ui_window_30">Within 30 days</string>
+    <string name="core_ui_window_90">Within 90 days</string>
+    <string name="core_ui_sort_expiry">Expiry date</string>
+    <string name="core_ui_sort_name">Name</string>
+
+    <!-- Disposal -->
+    <string name="core_ui_disposal_title">Dispose of medicines safely</string>
+    <string name="core_ui_disposal_body">Don\'t flush medicines or put them loose in household rubbish. Take them to a pharmacy or a medicine take-back point. Remove personal details from labels first. Follow local guidance for needles, inhalers and liquids.</string>
+</resources>

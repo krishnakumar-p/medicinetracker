@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feature_family_title">Family</string>
+    <string name="feature_family_add">Add family member</string>
+    <string name="feature_family_edit">Edit family member</string>
+    <string name="feature_family_empty_title">No family members yet</string>
+    <string name="feature_family_empty_body">Add the people you keep medicines for to see who each medicine is prescribed for.</string>
+    <string name="feature_family_not_found">Family member not found</string>
+    <string name="feature_family_current">In the cabinet</string>
+    <string name="feature_family_past">Past medicines</string>
+    <string name="feature_family_no_current">No current medicines for this person.</string>
+    <string name="feature_family_for_condition">For: %1$s</string>
+    <string name="feature_family_no_condition">condition not recorded</string>
+    <string name="feature_family_age">Age %1$d · born %2$s</string>
+    <string name="feature_family_allergies">Allergies</string>
+    <string name="feature_family_field_name">Name *</string>
+    <string name="feature_family_field_relationship">Relationship</string>
+    <string name="feature_family_relationship_hint">e.g. Mother, Son, Me</string>
+    <string name="feature_family_field_dob">Date of birth</string>
+    <string name="feature_family_field_allergies">Allergies</string>
+    <string name="feature_family_field_color">Avatar colour</string>
+    <string name="feature_family_color_n">Colour %1$d</string>
+    <string name="feature_family_error_name">Enter a name</string>
+    <string name="feature_family_error_dob">Date of birth can\'t be in the future</string>
+    <string name="feature_family_delete_title">Remove %1$s?</string>
+    <string name="feature_family_delete_body">Their medicines stay in the inventory, but will no longer be linked to them.</string>
+    <plurals name="feature_family_medicine_count">
+        <item quantity="one">%d medicine</item>
+        <item quantity="other">%d medicines</item>
+    </plurals>
+</resources>

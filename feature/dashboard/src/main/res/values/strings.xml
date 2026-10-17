@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feature_dashboard_title">MediShelf</string>
+    <string name="feature_dashboard_expired">Expired</string>
+    <string name="feature_dashboard_expiring">Expiring in %1$d days</string>
+    <string name="feature_dashboard_low_stock">Low stock</string>
+    <string name="feature_dashboard_add">Add medicine</string>
+    <string name="feature_dashboard_attention">Needs attention</string>
+    <string name="feature_dashboard_all_good">Nothing expires in the next 30 days.</string>
+    <string name="feature_dashboard_welcome">Start by adding the medicines you keep at home. MediShelf will remind you before they expire and when stock runs low.</string>
+    <string name="feature_dashboard_scan">Scan a barcode to add</string>
+    <string name="feature_dashboard_notifications_title">Turn on reminders</string>
+    <string name="feature_dashboard_notifications_body">Allow notifications so MediShelf can tell you before medicines expire or run low.</string>
+    <string name="feature_dashboard_notifications_allow">Allow notifications</string>
+</resources>

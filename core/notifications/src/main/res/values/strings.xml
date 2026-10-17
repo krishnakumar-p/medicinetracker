@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="core_notifications_channel_expiry">Expiry reminders</string>
+    <string name="core_notifications_channel_expiry_desc">Medicines that are about to expire or have expired</string>
+    <string name="core_notifications_channel_stock">Low stock</string>
+    <string name="core_notifications_channel_stock_desc">Medicines that are running low</string>
+    <string name="core_notifications_public_title">MediShelf</string>
+    <string name="core_notifications_public_text">You have medicine reminders. Unlock to see them.</string>
+    <string name="core_notifications_line">%1$s – %2$s</string>
+    <string name="core_notifications_today">expires today</string>
+    <plurals name="core_notifications_in_days">
+        <item quantity="one">in %d day</item>
+        <item quantity="other">in %d days</item>
+    </plurals>
+    <plurals name="core_notifications_expiring_title">
+        <item quantity="one">%d medicine expires soon</item>
+        <item quantity="other">%d medicines expire soon</item>
+    </plurals>
+    <plurals name="core_notifications_expired_title">
+        <item quantity="one">%d medicine has expired</item>
+        <item quantity="other">%d medicines have expired</item>
+    </plurals>
+    <plurals name="core_notifications_low_title">
+        <item quantity="one">%d medicine is running low</item>
+        <item quantity="other">%d medicines are running low</item>
+    </plurals>
+</resources>

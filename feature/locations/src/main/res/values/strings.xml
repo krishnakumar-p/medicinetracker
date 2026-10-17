@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feature_locations_title">Where is it?</string>
+    <string name="feature_locations_add">Add location</string>
+    <string name="feature_locations_edit">Edit location</string>
+    <string name="feature_locations_edit_named">Edit %1$s</string>
+    <string name="feature_locations_empty_title">No storage locations yet</string>
+    <string name="feature_locations_empty_body">Add the places you keep medicines, like a kitchen cabinet, the fridge door or the car first-aid kit.</string>
+    <string name="feature_locations_nothing_here">Nothing stored here.</string>
+    <string name="feature_locations_refrigerated">Refrigerated</string>
+    <string name="feature_locations_field_name">Name *</string>
+    <string name="feature_locations_name_hint">e.g. Kitchen cabinet – top shelf</string>
+    <string name="feature_locations_field_room">Room</string>
+    <string name="feature_locations_room_hint">e.g. Kitchen</string>
+    <string name="feature_locations_field_refrigerated">Refrigerated storage</string>
+    <string name="feature_locations_field_notes">Notes</string>
+    <string name="feature_locations_error_name">Enter a name</string>
+    <string name="feature_locations_delete_title">Remove %1$s?</string>
+    <string name="feature_locations_delete_body">Medicines stored here are kept and will show as having no location.</string>
+    <plurals name="feature_locations_item_count">
+        <item quantity="one">%d item</item>
+        <item quantity="other">%d items</item>
+    </plurals>
+</resources>

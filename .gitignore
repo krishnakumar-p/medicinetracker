@@ -1,0 +1,16 @@
+*.iml
+.gradle/
+.kotlin/
+/local.properties
+/.idea/
+.DS_Store
+build/
+/captures
+.externalNativeBuild
+.cxx
+*.jks
+*.keystore
+keystore.properties
+# Release signing material never goes in git (see README > Signed releases)
+*.p12
+release-keystore*

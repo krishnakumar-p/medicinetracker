@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Medicine cabinet with a cross: placeholder launcher glyph. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp"
+    android:height="108dp"
+    android:viewportWidth="108"
+    android:viewportHeight="108">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M36,32h36a4,4 0,0 1,4 4v36a4,4 0,0 1,-4 4h-36a4,4 0,0 1,-4 -4v-36a4,4 0,0 1,4 -4z" />
+    <path
+        android:fillColor="#FF006A60"
+        android:pathData="M50,42h8v8h8v8h-8v8h-8v-8h-8v-8h8z" />
+</vector>
