@@ -18,6 +18,7 @@ import com.medishelf.core.model.FamilyMember
 import com.medishelf.core.model.ScanSuggestion
 import com.medishelf.core.model.StorageLocation
 import com.medishelf.core.ui.ScanResultTransfer
+import com.medishelf.core.ui.toEditableString
 import com.medishelf.feature.medicines.navigation.MedicineEditRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,11 +28,10 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.time.LocalDate
 import javax.inject.Inject
 
 /** Fields filled by a camera scan; the editor flags them for the user to check. */
-enum class ScannedField { BARCODE, NAME, STRENGTH, EXPIRY, BATCH }
+enum class ScannedField { BARCODE, NAME, GENERIC, STRENGTH, FORM, QUANTITY, MANUFACTURER, EXPIRY, BATCH, PRESCRIPTION, DOSAGE, NOTES }
 
 data class MedicineEditUiState(
     val isLoading: Boolean = true,
@@ -70,7 +70,7 @@ class MedicineEditViewModel @Inject constructor(
 ) : ViewModel() {
 
     private val route = savedStateHandle.toRoute<MedicineEditRoute>()
-    private val form = MutableStateFlow(MedicineFormState(barcode = route.barcode.orEmpty()))
+    private val form = MutableStateFlow(MedicineFormState())
     private val meta = MutableStateFlow(EditMeta(isLoading = true))
 
     val uiState: StateFlow<MedicineEditUiState> = combine(
@@ -101,7 +101,6 @@ class MedicineEditViewModel @Inject constructor(
             if (route.id != 0L) {
                 medicines.get(route.id)?.let { form.value = MedicineFormState.from(it) }
             }
-            route.scanSuggestion()?.let { applyScan(it) }
             meta.update { it.copy(isLoading = false) }
         }
         // Results from a scanner opened by this editor arrive through the back stack.
@@ -109,8 +108,10 @@ class MedicineEditViewModel @Inject constructor(
     }
 
     /**
-     * Product fields from a known barcode fill only an empty form; pack-specific values read
-     * by the camera (expiry, batch) overwrite, since they describe the pack in hand.
+     * Applies a confirmed scan. Product details from a previously saved pack with the same
+     * barcode fill an empty form first (the user typed those before, so they're trusted most).
+     * Camera-read text then fills fields that are still empty; pack-specific values (expiry,
+     * batch) overwrite, since they describe the pack in hand.
      */
     private suspend fun applyScan(scan: ScanSuggestion) {
         val prefill = scan.barcode?.let { findPrefill(it) }
@@ -118,7 +119,8 @@ class MedicineEditViewModel @Inject constructor(
         form.update { current ->
             scanned.clear()
             var f = current
-            if (prefill != null && f.brandName.isBlank()) {
+            val wasEmpty = f.brandName.isBlank() && f.genericName.isBlank()
+            if (prefill != null && wasEmpty) {
                 f = MedicineFormState.from(prefill).copy(
                     id = f.id,
                     quantityText = f.quantityText,
@@ -128,9 +130,23 @@ class MedicineEditViewModel @Inject constructor(
                     notes = f.notes,
                 )
             }
+            fun fill(field: ScannedField, value: String?, isBlank: Boolean, set: (String) -> Unit) {
+                if (value != null && isBlank) { set(value); scanned += field }
+            }
             scan.barcode?.let { f = f.copy(barcode = it); scanned += ScannedField.BARCODE }
-            scan.name?.takeIf { f.brandName.isBlank() }?.let { f = f.copy(brandName = it); scanned += ScannedField.NAME }
-            scan.strength?.takeIf { f.strength.isBlank() }?.let { f = f.copy(strength = it); scanned += ScannedField.STRENGTH }
+            fill(ScannedField.NAME, scan.name, f.brandName.isBlank()) { f = f.copy(brandName = it) }
+            fill(ScannedField.GENERIC, scan.genericName, f.genericName.isBlank()) { f = f.copy(genericName = it) }
+            fill(ScannedField.STRENGTH, scan.strength, f.strength.isBlank()) { f = f.copy(strength = it) }
+            fill(ScannedField.MANUFACTURER, scan.manufacturer, f.manufacturer.isBlank()) { f = f.copy(manufacturer = it) }
+            fill(ScannedField.DOSAGE, scan.dosageInstructions, f.dosageInstructions.isBlank()) { f = f.copy(dosageInstructions = it) }
+            fill(ScannedField.NOTES, scan.storageNote, f.notes.isBlank()) { f = f.copy(notes = it) }
+            // Form and unit always have a default value, so only a fresh entry takes them from the scan.
+            scan.form?.takeIf { wasEmpty && prefill == null }?.let { f = f.copy(form = it); scanned += ScannedField.FORM }
+            scan.quantity?.takeIf { f.quantityText.isBlank() }?.let { amount ->
+                f = f.copy(quantityText = amount.toEditableString(), unit = scan.unit ?: f.unit)
+                scanned += ScannedField.QUANTITY
+            }
+            if (scan.isPrescription == true && !f.isPrescription) { f = f.copy(isPrescription = true); scanned += ScannedField.PRESCRIPTION }
             scan.expiryDate?.let { f = f.copy(expiryDate = it); scanned += ScannedField.EXPIRY }
             scan.batchNumber?.let { f = f.copy(batchNumber = it); scanned += ScannedField.BATCH }
             f
@@ -159,12 +175,3 @@ class MedicineEditViewModel @Inject constructor(
         }
     }
 }
-
-private fun MedicineEditRoute.scanSuggestion(): ScanSuggestion? =
-    ScanSuggestion(
-        barcode = barcode?.takeIf(String::isNotBlank),
-        name = name?.takeIf(String::isNotBlank),
-        strength = strength?.takeIf(String::isNotBlank),
-        expiryDate = expiry?.let { runCatching { LocalDate.parse(it) }.getOrNull() },
-        batchNumber = batch?.takeIf(String::isNotBlank),
-    ).takeUnless { it.isEmpty }

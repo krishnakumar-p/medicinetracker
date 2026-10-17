@@ -14,6 +14,7 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.selection.toggleable
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.foundation.verticalScroll
+import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
@@ -67,7 +68,7 @@ internal data class MedicineEditActions(
     val onConditionChange: (Long, String) -> Unit = { _, _ -> },
     val onSave: () -> Unit = {},
     val onScanBarcode: () -> Unit = {},
-    val onReadLabel: () -> Unit = {},
+    val onScanPack: () -> Unit = {},
 )
 
 @Composable
@@ -75,7 +76,7 @@ internal fun MedicineEditScreen(
     onNavigateUp: () -> Unit,
     onSaved: (Long, Boolean) -> Unit,
     onScanBarcode: () -> Unit = {},
-    onReadLabel: () -> Unit = {},
+    onScanPack: () -> Unit = {},
     viewModel: MedicineEditViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -89,7 +90,7 @@ internal fun MedicineEditScreen(
             onConditionChange = viewModel::onConditionChange,
             onSave = viewModel::onSave,
             onScanBarcode = onScanBarcode,
-            onReadLabel = onReadLabel,
+            onScanPack = onScanPack,
         ),
     )
 }
@@ -147,6 +148,7 @@ internal fun MedicineEditContent(state: MedicineEditUiState, actions: MedicineEd
                     label = stringResource(R.string.feature_medicines_field_generic),
                     value = form.genericName,
                     onValueChange = { v -> update { it.copy(genericName = v) } },
+                    supporting = scannedNote(ScannedField.GENERIC in state.scannedFields),
                 )
                 TextInput(
                     label = stringResource(R.string.feature_medicines_field_strength),
@@ -161,10 +163,14 @@ internal fun MedicineEditContent(state: MedicineEditUiState, actions: MedicineEd
                     optionLabel = { it.label() },
                     onSelect = { v -> update { it.copy(form = v) } },
                 )
+                scannedNote(ScannedField.FORM in state.scannedFields)?.let {
+                    Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                }
                 TextInput(
                     label = stringResource(R.string.feature_medicines_field_manufacturer),
                     value = form.manufacturer,
                     onValueChange = { v -> update { it.copy(manufacturer = v) } },
+                    supporting = scannedNote(ScannedField.MANUFACTURER in state.scannedFields),
                 )
                 TextInput(
                     label = stringResource(R.string.feature_medicines_field_batch),
@@ -188,6 +194,7 @@ internal fun MedicineEditContent(state: MedicineEditUiState, actions: MedicineEd
                     value = form.quantityText,
                     onValueChange = { v -> update { it.copy(quantityText = v) } },
                     error = errors.messageFor(QUANTITY_REQUIRED, QUANTITY_NEGATIVE),
+                    supporting = scannedNote(ScannedField.QUANTITY in state.scannedFields),
                     keyboardType = KeyboardType.Decimal,
                     tag = "field_quantity",
                 )
@@ -276,7 +283,12 @@ internal fun MedicineEditContent(state: MedicineEditUiState, actions: MedicineEd
                         ),
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
-                    Text(stringResource(R.string.feature_medicines_field_is_prescription), modifier = Modifier.weight(1f))
+                    Column(Modifier.weight(1f)) {
+                        Text(stringResource(R.string.feature_medicines_field_is_prescription))
+                        scannedNote(ScannedField.PRESCRIPTION in state.scannedFields)?.let {
+                            Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
+                        }
+                    }
                     Switch(checked = form.isPrescription, onCheckedChange = null)
                 }
                 TextInput(
@@ -295,6 +307,7 @@ internal fun MedicineEditContent(state: MedicineEditUiState, actions: MedicineEd
                     label = stringResource(R.string.feature_medicines_field_dosage),
                     value = form.dosageInstructions,
                     onValueChange = { v -> update { it.copy(dosageInstructions = v) } },
+                    supporting = scannedNote(ScannedField.DOSAGE in state.scannedFields),
                     singleLine = false,
                 )
             }
@@ -315,6 +328,7 @@ internal fun MedicineEditContent(state: MedicineEditUiState, actions: MedicineEd
                     label = stringResource(R.string.feature_medicines_field_notes),
                     value = form.notes,
                     onValueChange = { v -> update { it.copy(notes = v) } },
+                    supporting = scannedNote(ScannedField.NOTES in state.scannedFields),
                     singleLine = false,
                 )
             }
@@ -339,8 +353,10 @@ private fun ScanCard(state: MedicineEditUiState, actions: MedicineEditActions) {
                 modifier = Modifier.testTag("scan_notice"),
             )
             FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
+                Button(onClick = actions.onScanPack, modifier = Modifier.testTag("scan_pack")) {
+                    Text(stringResource(R.string.feature_medicines_scan_pack))
+                }
                 OutlinedButton(onClick = actions.onScanBarcode) { Text(stringResource(R.string.feature_medicines_scan_barcode)) }
-                OutlinedButton(onClick = actions.onReadLabel) { Text(stringResource(R.string.feature_medicines_read_label)) }
             }
         }
     }

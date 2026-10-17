@@ -84,9 +84,11 @@ class MedicineViewModelsTest {
     @Test
     fun edit_withKnownBarcode_prefillsProductFields() = runTest(mainDispatcherRule.testDispatcher) {
         f.medicines.put(testMedicine(brandName = "Augmentin", barcode = "6281"))
-        val vm = f.editViewModel(MedicineEditRoute(barcode = "6281"))
+        val handle = androidx.lifecycle.SavedStateHandle(route = MedicineEditRoute())
+        val vm = f.editViewModel(savedStateHandle = handle)
+        com.medishelf.core.ui.ScanResultTransfer.put(handle, com.medishelf.core.model.ScanSuggestion(barcode = "6281"))
 
-        val state = vm.uiState.first { !it.isLoading }
+        val state = vm.uiState.first { it.prefilledFromBarcode }
 
         assertThat(state.prefilledFromBarcode).isTrue()
         assertThat(state.form.brandName).isEqualTo("Augmentin")
@@ -135,17 +137,37 @@ class MedicineViewModelsTest {
     }
 
     @Test
-    fun edit_scanFromDashboardRoute_prefillsAndMarksFields() = runTest(mainDispatcherRule.testDispatcher) {
-        f.medicines.put(testMedicine(brandName = "Augmentin", genericName = "Amoxicillin", barcode = "6281"))
-        val vm = f.editViewModel(MedicineEditRoute(barcode = "6281", expiry = "2027-12-31", batch = "B9"))
+    fun edit_fullPackScan_fillsEveryFieldAndMarksIt() = runTest(mainDispatcherRule.testDispatcher) {
+        val handle = androidx.lifecycle.SavedStateHandle(route = MedicineEditRoute())
+        val vm = f.editViewModel(savedStateHandle = handle)
         backgroundScope.launch { vm.uiState.collect {} }
 
+        com.medishelf.core.ui.ScanResultTransfer.put(
+            handle,
+            com.medishelf.core.model.ScanSuggestion(
+                barcode = "6291000000017", name = "Augmentin", genericName = "Amoxicillin + Clavulanic acid",
+                strength = "457 mg/5 ml", form = com.medishelf.core.model.MedicineForm.SYRUP, quantity = 70.0,
+                unit = com.medishelf.core.model.QuantityUnit.ML, manufacturer = "Beecham Group plc",
+                expiryDate = java.time.LocalDate.of(2027, 12, 31), batchNumber = "B9", isPrescription = true,
+                dosageInstructions = "5 ml twice daily", storageNote = "Store in a refrigerator (2°C – 8°C).",
+            ),
+        )
+
         val state = vm.uiState.value
-        assertThat(state.form.brandName).isEqualTo("Augmentin")
-        assertThat(state.form.expiryDate).isEqualTo(java.time.LocalDate.of(2027, 12, 31))
-        assertThat(state.form.batchNumber).isEqualTo("B9")
-        assertThat(state.scannedFields).containsExactly(ScannedField.BARCODE, ScannedField.EXPIRY, ScannedField.BATCH)
-        assertThat(state.prefilledFromBarcode).isTrue()
+        with(state.form) {
+            assertThat(brandName).isEqualTo("Augmentin")
+            assertThat(genericName).isEqualTo("Amoxicillin + Clavulanic acid")
+            assertThat(form).isEqualTo(com.medishelf.core.model.MedicineForm.SYRUP)
+            assertThat(quantityText).isEqualTo("70")
+            assertThat(unit).isEqualTo(com.medishelf.core.model.QuantityUnit.ML)
+            assertThat(manufacturer).isEqualTo("Beecham Group plc")
+            assertThat(isPrescription).isTrue()
+            assertThat(dosageInstructions).isEqualTo("5 ml twice daily")
+            assertThat(notes).isEqualTo("Store in a refrigerator (2°C – 8°C).")
+        }
+        assertThat(state.scannedFields).containsExactlyElementsIn(ScannedField.entries)
+        // Nothing saved until the user confirms in the editor.
+        assertThat(f.medicines.events.value).isEmpty()
     }
 
     @Test

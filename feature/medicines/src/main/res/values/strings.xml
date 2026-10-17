@@ -96,9 +96,9 @@
     <string name="feature_medicines_remove_photo">Remove %1$s photo</string>
     <string name="feature_medicines_remove_photo_title">Remove photo?</string>
     <string name="feature_medicines_remove_photo_body">The photo will be deleted from this device.</string>
-    <string name="feature_medicines_scan_intro">Save typing: scan the barcode or read the label on the box.</string>
-    <string name="feature_medicines_scan_barcode">Scan barcode</string>
-    <string name="feature_medicines_read_label">Read label</string>
+    <string name="feature_medicines_scan_intro">Save typing: photograph the box and MediShelf reads the name, ingredients, strength, pack size, expiry, batch and barcode for you to check.</string>
+    <string name="feature_medicines_scan_barcode">Barcode only</string>
     <string name="feature_medicines_scanned_notice">Some details were filled in from the camera. Check each marked field against the box before saving.</string>
     <string name="feature_medicines_scanned_field">From scan, please check</string>
+    <string name="feature_medicines_scan_pack">Scan pack</string>
 </resources>

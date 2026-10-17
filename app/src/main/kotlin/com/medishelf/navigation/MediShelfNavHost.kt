@@ -49,7 +49,7 @@ fun MediShelfNavHost(
         dashboardScreen(
             onTileClick = { tile -> navController.navigateToMedicineList(tile.toPreset()) },
             onAddMedicine = { navController.navigateToMedicineEdit() },
-            onScanBarcode = { navController.navigateToScan(ScanMode.BARCODE) },
+            onScanBarcode = { navController.navigateToScan(ScanMode.PACK) },
             onMedicineClick = navController::navigateToMedicineDetail,
         )
         medicinesScreens(
@@ -68,7 +68,7 @@ fun MediShelfNavHost(
                 }
             },
             onScanBarcode = { navController.navigateToScan(ScanMode.BARCODE) },
-            onReadLabel = { navController.navigateToScan(ScanMode.LABEL) },
+            onScanPack = { navController.navigateToScan(ScanMode.PACK) },
         )
         scanScreen(
             onNavigateUp = navigateUp,
@@ -108,7 +108,7 @@ fun MediShelfNavHost(
 
 /**
  * Opened from the editor: hand the result back to it. Opened from elsewhere (dashboard):
- * replace the scanner with a new prefilled editor.
+ * replace the scanner with a new editor and hand the result to that.
  */
 private fun NavHostController.deliverScanResult(result: ScanSuggestion) {
     val previous = previousBackStackEntry
@@ -116,15 +116,8 @@ private fun NavHostController.deliverScanResult(result: ScanSuggestion) {
         ScanResultTransfer.put(previous.savedStateHandle, result)
         popBackStack()
     } else {
-        navigate(
-            MedicineEditRoute(
-                barcode = result.barcode,
-                name = result.name,
-                strength = result.strength,
-                expiry = result.expiryDate?.toString(),
-                batch = result.batchNumber,
-            ),
-        ) { popUpTo<ScanRoute> { inclusive = true } }
+        navigate(MedicineEditRoute()) { popUpTo<ScanRoute> { inclusive = true } }
+        currentBackStackEntry?.savedStateHandle?.let { ScanResultTransfer.put(it, result) }
     }
 }
 

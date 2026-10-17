@@ -16,9 +16,13 @@ have, who it is for and for which condition, where it is kept, and when it expir
 - **Dashboard**: expired / expiring in 30 days / low-stock counts, and what needs attention.
 - **Search and filters**: by name, ingredient, condition or person; filter by person, location,
   status, form, expiry window, low stock; sort by expiry or name.
-- **Scanning (on-device only)**: barcode scan prefills from a previously saved pack;
-  GS1 DataMatrix codes also fill in expiry date and batch; label OCR suggests name, strength,
-  expiry and batch. Every scanned value is marked for the user to confirm before saving.
+- **Scan pack (on-device only)**: photograph each side of the box; every photo gets full OCR
+  plus barcode/DataMatrix detection, and the results from all sides are merged. Brand name,
+  active ingredients, strength, form, pack size, manufacturer, expiry, batch, prescription-only
+  marking, dosage directions, storage notes and barcode are offered on one review screen,
+  and the editor marks every filled field for the user to check before saving. GS1 DataMatrix
+  expiry and batch take priority over OCR, and a barcode seen before prefills from the saved pack.
+  A quick **barcode only** scan is also available.
 - **Lifecycle and history**: mark used (reduces quantity), finished, disposed or restore.
   Records are never hard-deleted; every change is logged. Safe-disposal guidance is shown for
   expired items.
@@ -70,7 +74,7 @@ records. **Run reminder check now** triggers the daily job immediately.
 ./gradlew test testDebugUnitTest lintDebug
 ```
 
-This runs 120 JVM tests: domain rules (validation, expiry, reminders, GS1/label parsing,
+This runs the JVM test suite: domain rules (validation, expiry, reminders, GS1/full-label parsing,
 CSV), Room DAO and repository tests, encrypted-backup round trips, the reminder worker,
 ViewModels, Compose UI flows and an accessibility audit of every main screen (Robolectric).
 
@@ -79,6 +83,13 @@ targets, labels) against the real app. It expects a fresh install:
 
 ```bash
 adb uninstall com.medishelf.debug; ./gradlew :app:connectedDebugAndroidTest
+```
+
+The pack-scan device test renders a box side with text and a real EAN-13 barcode and runs
+the bundled ML Kit OCR and barcode models plus the parser over it:
+
+```bash
+./gradlew :feature:scan:connectedDebugAndroidTest
 ```
 
 SQLCipher itself only runs on a device or emulator; JVM tests use an in-memory Room database.
@@ -238,8 +249,8 @@ When updating an action, pin the new release's SHA, not a moving tag.
 
 ## Known limitations
 
-- Label OCR uses ML Kit's Latin-script model; it was tested with synthetic text, not yet
-  against a wide range of real packs.
+- Pack OCR uses ML Kit's Latin-script model. It is tested against realistic label text and a
+  rendered box on a device, but not yet against a wide range of real, glossy or curved packs.
 - Biometric unlock and the Android 8–10 forgot-PIN path have not been tried on physical
   hardware.
 - If the Android Keystore is wiped (factory reset, some security updates), the encrypted

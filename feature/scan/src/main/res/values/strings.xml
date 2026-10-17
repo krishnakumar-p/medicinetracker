@@ -1,9 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="feature_scan_barcode_title">Scan barcode</string>
-    <string name="feature_scan_label_title">Read label</string>
     <string name="feature_scan_barcode_hint">Point at the barcode or the square code on the box</string>
-    <string name="feature_scan_label_hint">Fit the name and expiry date in the frame, then capture</string>
     <string name="feature_scan_reading">Reading the label…</string>
     <string name="feature_scan_capture">Capture</string>
     <string name="feature_scan_torch">Torch</string>
@@ -15,7 +13,6 @@
     <string name="feature_scan_permission_title">Camera access is off</string>
     <string name="feature_scan_permission_body">MediShelf uses the camera only to read barcodes and labels on this device. Nothing is uploaded. Turn on camera access in Settings to scan.</string>
     <string name="feature_scan_open_settings">Open Settings</string>
-    <string name="feature_scan_review_intro">Check what was read from the label. Pick the right value for each field, or choose \"Don\'t fill\".</string>
     <string name="feature_scan_field_name">Name</string>
     <string name="feature_scan_field_strength">Strength</string>
     <string name="feature_scan_field_expiry">Expiry date</string>
@@ -23,4 +20,26 @@
     <string name="feature_scan_dont_fill">Don\'t fill</string>
     <string name="feature_scan_retake">Retake</string>
     <string name="feature_scan_use_selected">Use selected</string>
+    <string name="feature_scan_pack_title">Scan pack</string>
+    <string name="feature_scan_pack_hint">Photograph each side of the box that has text: front, back and sides. The barcode is picked up automatically.</string>
+    <string name="feature_scan_capture_another">Capture another side</string>
+    <string name="feature_scan_done">Done</string>
+    <string name="feature_scan_side_empty">No text found in that photo. Hold the pack steady in good light and try again.</string>
+    <string name="feature_scan_barcode_found">Barcode found: %1$s</string>
+    <string name="feature_scan_field_generic">Active ingredients</string>
+    <string name="feature_scan_field_form">Form</string>
+    <string name="feature_scan_field_quantity">Pack size</string>
+    <string name="feature_scan_field_barcode">Barcode</string>
+    <string name="feature_scan_field_manufacturer">Manufacturer</string>
+    <string name="feature_scan_field_dosage">Dosage directions</string>
+    <string name="feature_scan_field_storage">Storage</string>
+    <string name="feature_scan_field_prescription">Prescription-only medicine</string>
+    <plurals name="feature_scan_sides_captured">
+        <item quantity="one">%d side read. Capture another side, or tap Done.</item>
+        <item quantity="other">%d sides read. Capture another side, or tap Done.</item>
+    </plurals>
+    <plurals name="feature_scan_review_intro">
+        <item quantity="one">Read from %d photo. Check each field against the pack and pick the right value, or choose "Don\'t fill".</item>
+        <item quantity="other">Read from %d photos. Check each field against the pack and pick the right value, or choose "Don\'t fill".</item>
+    </plurals>
 </resources>

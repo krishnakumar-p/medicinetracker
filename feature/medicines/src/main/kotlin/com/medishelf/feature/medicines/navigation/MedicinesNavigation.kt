@@ -18,20 +18,9 @@ data class MedicineListRoute(val preset: MedicineListPreset? = null)
 @Serializable
 data class MedicineDetailRoute(val id: Long)
 
-/**
- * [id] 0 = new medicine. The other fields carry a scan result when the editor is opened from a
- * scan (e.g. the dashboard's "Scan barcode"): [barcode] also prefills from a previously saved
- * medicine with the same code, and [expiry] is ISO-8601.
- */
+/** [id] 0 = new medicine. Scan results reach the editor through ScanResultTransfer. */
 @Serializable
-data class MedicineEditRoute(
-    val id: Long = 0,
-    val barcode: String? = null,
-    val name: String? = null,
-    val strength: String? = null,
-    val expiry: String? = null,
-    val batch: String? = null,
-)
+data class MedicineEditRoute(val id: Long = 0)
 
 fun NavController.navigateToMedicineList(preset: MedicineListPreset? = null, navOptions: NavOptions? = null) =
     navigate(MedicineListRoute(preset), navOptions)
@@ -47,7 +36,7 @@ fun NavGraphBuilder.medicinesScreens(
     onEditMedicine: (Long) -> Unit,
     onMedicineSaved: (Long, isNew: Boolean) -> Unit,
     onScanBarcode: () -> Unit,
-    onReadLabel: () -> Unit,
+    onScanPack: () -> Unit,
 ) {
     composable<MedicineListRoute> {
         MedicineListScreen(onMedicineClick = onMedicineClick, onAddMedicine = onAddMedicine)
@@ -60,7 +49,7 @@ fun NavGraphBuilder.medicinesScreens(
             onNavigateUp = onNavigateUp,
             onSaved = onMedicineSaved,
             onScanBarcode = onScanBarcode,
-            onReadLabel = onReadLabel,
+            onScanPack = onScanPack,
         )
     }
 }

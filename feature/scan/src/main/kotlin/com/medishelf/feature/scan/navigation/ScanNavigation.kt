@@ -7,7 +7,8 @@ import com.medishelf.core.model.ScanSuggestion
 import com.medishelf.feature.scan.ScanScreen
 import kotlinx.serialization.Serializable
 
-enum class ScanMode { BARCODE, LABEL }
+/** BARCODE: quick single-code scan. PACK: photograph every side; full OCR plus barcode. */
+enum class ScanMode { BARCODE, PACK }
 
 @Serializable
 data class ScanRoute(val mode: ScanMode)

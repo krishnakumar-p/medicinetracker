@@ -3,118 +3,50 @@ package com.medishelf.core.domain.scan
 import com.medishelf.core.model.LabelSuggestions
 import com.medishelf.core.model.RecognizedLine
 import java.time.LocalDate
-import java.time.YearMonth
 import java.util.Locale
 
 /**
- * Turns OCR lines from a medicine box into ranked suggestions. Heuristic by nature, so the UI
- * always asks the user to pick and confirm; nothing here is trusted blindly.
+ * Turns OCR lines from every photographed side of a medicine pack into ranked suggestions for
+ * each editor field. Heuristic by nature, so the UI always asks the user to pick and confirm.
  */
 object LabelTextParser {
-    private val expiryKeywords = Regex("""\b(EXP|EXPIRY|EXPIRES|EXP\.? ?DATE|USE BY|USE BEFORE|BEST BEFORE|BB|ED|VAL|VALID|VERW\.? ?BIS|EXD)\b""")
-    private val manufactureKeywords = Regex("""\b(MFG|MFD|MFGD|MANUF|MANUFACTURED|MANUFACTURING|PROD|PRODUCTION|MF|M\.D|DOM|PD)\b""")
     private val batchRegex = Regex("""\b(?:LOT|BATCH|B\. ?NO|B/NO|BN|BNO|CH\.?-?B|CHARGE)\b\.?\s*(?:NO\.?|NUMBER)?\s*[:.#]?\s*([A-Z0-9][A-Z0-9-/]{2,19})""")
-    private val strengthRegex = Regex("""\b(\d+(?:[.,]\d+)?)\s?(MG|MCG|µG|UG|G|ML|IU|%)(?:\s?/\s?(\d+(?:[.,]\d+)?)?\s?(ML|G|DOSE|TAB))?\b""")
-    private val nonNameWords = Regex("""\b(EXP|LOT|BATCH|MFG|MFD|TABLETS?|CAPSULES?|FILM|COATED|ORAL|USE|STORE|KEEP|READ|LEAFLET|PRESCRIPTION|ONLY|EACH|CONTAINS|BELOW|REACH|CHILDREN|DOSAGE|PRICE|SR|RX)\b""")
-
-    private val months = mapOf(
-        "JAN" to 1, "FEB" to 2, "MAR" to 3, "APR" to 4, "MAY" to 5, "JUN" to 6,
-        "JUL" to 7, "AUG" to 8, "SEP" to 9, "SEPT" to 9, "OCT" to 10, "NOV" to 11, "DEC" to 12,
+    private val trademark = Regex("""[®™©]""")
+    private val nonNameWords = Regex(
+        """\b(EXP|LOT|BATCH|MFG|MFD|TABLETS?|CAPSULES?|CAPLETS?|FILM|COATED|ORAL|USE|STORE|KEEP|READ|LEAFLET|PRESCRIPTION|ONLY|EACH|CONTAINS|BELOW|REACH|CHILDREN|DOSAGE|DIRECTIONS|PRICE|RX|POM|POWDER|SOLUTION|SUSPENSION|SYRUP|DROPS|CREAM|OINTMENT|GEL|INJECTION|INHALER|INGREDIENTS?|COMPOSITION|PER|ML|WHEN|RECONSTITUTED|WARNING|ADULTS?)\b""",
     )
 
-    private data class Scored<T>(val value: T, val score: Int)
-
-    fun parse(lines: List<RecognizedLine>, today: LocalDate): LabelSuggestions {
-        val upper = lines.map { it.copy(text = it.text.uppercase(Locale.ROOT).trim()) }
+    fun parse(recognized: List<RecognizedLine>, today: LocalDate): LabelSuggestions {
+        val lines = recognized
+            .map { Line(it.text.trim(), it.text.uppercase(Locale.ROOT).trim(), it.height) }
+            .filter { it.upper.isNotEmpty() }
+        val upper = lines.map { it.upper }
+        val names = names(lines)
         return LabelSuggestions(
-            names = names(upper),
+            names = names,
+            genericNames = LabelDetails.genericNames(lines, names.firstOrNull()),
             strengths = strengths(upper),
-            expiryDates = expiries(upper, today),
+            forms = LabelDetails.forms(lines),
+            quantities = LabelDetails.quantities(lines),
+            manufacturers = LabelDetails.manufacturers(lines),
+            expiryDates = LabelDates.expiries(upper, today, LabelDetails.MAX),
             batchNumbers = batches(upper),
+            isPrescription = LabelDetails.isPrescription(lines),
+            dosageInstructions = LabelDetails.dosageInstructions(lines),
+            storageNotes = LabelDetails.storageNotes(lines),
         )
     }
 
-    // --- Expiry -----------------------------------------------------------------------------
-
-    private fun expiries(lines: List<RecognizedLine>, today: LocalDate): List<LocalDate> {
-        val candidates = mutableListOf<Scored<LocalDate>>()
-        lines.forEachIndexed { index, line ->
-            val previous = lines.getOrNull(index - 1)?.text.orEmpty()
-            var bonus = 0
-            if (expiryKeywords.containsMatchIn(line.text)) bonus += 5
-            else if (expiryKeywords.containsMatchIn(previous) && !manufactureKeywords.containsMatchIn(previous)) bonus += 3
-            if (manufactureKeywords.containsMatchIn(line.text) && !expiryKeywords.containsMatchIn(line.text)) bonus -= 8
-            // When a line holds both MFG and EXP dates, the later one is the expiry.
-            val dates = datesIn(line.text, today)
-            dates.forEachIndexed { i, date ->
-                var score = bonus
-                if (date.isAfter(today)) score += 2
-                if (dates.size > 1 && date == dates.maxOrNull()) score += 2
-                if (i > 0 && dates.size > 1) score += 1
-                candidates += Scored(date, score)
-            }
-        }
-        return candidates
-            .filter { it.value.isAfter(today.minusYears(5)) && it.value.isBefore(today.plusYears(15)) }
-            .sortedByDescending { it.score }
-            .map { it.value }
-            .distinct()
-            .take(MAX_CANDIDATES)
-    }
-
-    private val dmy = Regex("""\b(\d{1,2})[./-](\d{1,2})[./-](\d{4}|\d{2})\b""")
-    private val ymd = Regex("""\b(\d{4})[./-](\d{1,2})(?:[./-](\d{1,2}))?\b""")
-    private val my = Regex("""\b(\d{1,2})\s?[./-]\s?(\d{4}|\d{2})\b""")
-    private val dMonY = Regex("""\b(?:(\d{1,2})[ .-]?)?(JAN|FEB|MAR|APR|MAY|JUN|JUL|AUG|SEPT?|OCT|NOV|DEC)[A-Z]*[ .,/-]?\s?(\d{4}|\d{2})\b""")
-
-    /** Dates in reading order. Month-only dates resolve to the month's last day (pack convention). */
-    internal fun datesIn(text: String, today: LocalDate): List<LocalDate> {
-        val found = sortedMapOf<Int, LocalDate>()
-        val taken = mutableListOf<IntRange>()
-        fun claim(range: IntRange, date: LocalDate?) {
-            if (date == null || taken.any { it.first <= range.last && range.first <= it.last }) return
-            taken += range
-            found[range.first] = date
-        }
-        dMonY.findAll(text).forEach { m ->
-            val month = months[m.groupValues[2].take(4).let { if (it == "SEPT") it else it.take(3) }] ?: return@forEach
-            val year = fullYear(m.groupValues[3], today)
-            val day = m.groupValues[1].toIntOrNull()
-            claim(m.range, safeDate(year, month, day))
-        }
-        ymd.findAll(text).forEach { m ->
-            claim(m.range, safeDate(m.groupValues[1].toInt(), m.groupValues[2].toInt(), m.groupValues[3].toIntOrNull()))
-        }
-        dmy.findAll(text).forEach { m ->
-            claim(m.range, safeDate(fullYear(m.groupValues[3], today), m.groupValues[2].toInt(), m.groupValues[1].toInt()))
-        }
-        my.findAll(text).forEach { m ->
-            claim(m.range, safeDate(fullYear(m.groupValues[2], today), m.groupValues[1].toInt(), null))
-        }
-        return found.values.toList()
-    }
-
-    private fun fullYear(value: String, today: LocalDate): Int =
-        if (value.length == 4) value.toInt() else (today.year / 100) * 100 + value.toInt()
-
-    private fun safeDate(year: Int, month: Int, day: Int?): LocalDate? {
-        if (month !in 1..12 || year !in 1990..2100) return null
-        val ym = YearMonth.of(year, month)
-        return if (day == null) ym.atEndOfMonth() else runCatching { ym.atDay(day) }.getOrNull()
-    }
-
-    // --- Batch, strength, name --------------------------------------------------------------
-
-    private fun batches(lines: List<RecognizedLine>): List<String> =
-        lines.flatMap { line -> batchRegex.findAll(line.text).map { it.groupValues[1].trimEnd('-', '/') } }
+    private fun batches(lines: List<String>): List<String> =
+        lines.flatMap { line -> batchRegex.findAll(line).map { it.groupValues[1].trimEnd('-', '/') } }
             .filter { candidate -> candidate.any(Char::isDigit) }
             .distinct()
-            .take(MAX_CANDIDATES)
+            .take(LabelDetails.MAX)
 
-    private fun strengths(lines: List<RecognizedLine>): List<String> =
-        lines.flatMap { line -> strengthRegex.findAll(line.text).map { formatStrength(it) } }
+    private fun strengths(lines: List<String>): List<String> =
+        lines.flatMap { line -> LabelDetails.strengthRegex.findAll(line).map { formatStrength(it) } }
             .distinct()
-            .take(MAX_CANDIDATES)
+            .take(LabelDetails.MAX)
 
     private fun formatStrength(match: MatchResult): String {
         val (amount, unit, perAmount, perUnit) = match.destructured
@@ -122,26 +54,34 @@ object LabelTextParser {
         return if (perUnit.isEmpty()) base else "$base/${perAmount.replace(',', '.')}${if (perAmount.isEmpty()) "" else " "}${perUnit.lowercase(Locale.ROOT)}"
     }
 
-    private fun names(lines: List<RecognizedLine>): List<String> =
+    /**
+     * Brand-name candidates: short, mostly-letter lines ranked by printed size, with a boost for
+     * a trademark symbol. Strengths are stripped ("Augmentin 457mg/5ml" -> "Augmentin").
+     */
+    private fun names(lines: List<Line>): List<String> =
         lines.asSequence()
-            .map { it.copy(text = it.text.replace(Regex("""[®™©]"""), "").trim()) }
-            .filter { line ->
-                val letters = line.text.count(Char::isLetter)
-                letters >= 3 &&
-                    line.text.length <= 40 &&
-                    letters >= line.text.length * 0.6 &&
-                    !nonNameWords.containsMatchIn(line.text) &&
-                    !expiryKeywords.containsMatchIn(line.text) &&
-                    !manufactureKeywords.containsMatchIn(line.text)
+            .map { line ->
+                val marked = trademark.containsMatchIn(line.original)
+                val text = LabelDetails.stripStrengths(trademark.replace(line.original, ""))
+                Triple(text, line.height * (if (marked) 3 else 2), text.uppercase(Locale.ROOT))
             }
-            .sortedByDescending { it.height }
-            .map { it.text.toTitleCase() }
+            .filter { (text, _, upper) ->
+                val letters = text.count(Char::isLetter)
+                letters >= 3 &&
+                    text.length <= 40 &&
+                    letters >= text.length * 0.6 &&
+                    !nonNameWords.containsMatchIn(upper) &&
+                    !LabelDates.expiryKeywords.containsMatchIn(upper) &&
+                    !LabelDates.manufactureKeywords.containsMatchIn(upper) &&
+                    !LabelDetails.isManufacturerLine(upper) &&
+                    !LabelDetails.isPrescriptionLine(upper) &&
+                    !LabelDetails.isStorageLine(upper) &&
+                    !LabelDetails.isDosageLine(upper) &&
+                    !LabelDetails.isIngredientLine(upper)
+            }
+            .sortedByDescending { it.second }
+            .map { it.first.toDisplayCase() }
             .distinct()
-            .take(MAX_CANDIDATES)
+            .take(LabelDetails.MAX)
             .toList()
-
-    private fun String.toTitleCase(): String =
-        lowercase(Locale.ROOT).split(' ').joinToString(" ") { word -> word.replaceFirstChar { it.titlecase(Locale.ROOT) } }
-
-    private const val MAX_CANDIDATES = 3
 }

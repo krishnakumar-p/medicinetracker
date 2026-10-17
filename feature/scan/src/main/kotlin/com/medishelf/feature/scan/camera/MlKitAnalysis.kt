@@ -13,15 +13,17 @@ import com.google.mlkit.vision.barcode.BarcodeScanning
 import com.google.mlkit.vision.barcode.common.Barcode
 import com.google.mlkit.vision.common.InputImage
 import com.google.mlkit.vision.text.TextRecognition
+import com.google.mlkit.vision.text.TextRecognizer
 import com.google.mlkit.vision.text.latin.TextRecognizerOptions
 import com.medishelf.core.model.RecognizedLine
+import com.medishelf.feature.scan.SideReading
 import kotlinx.coroutines.suspendCancellableCoroutine
 import java.util.concurrent.Executor
 import kotlin.coroutines.resume
 import kotlin.coroutines.resumeWithException
 
 /** Formats printed on medicine packs: retail EAN/UPC, Code 128/39 and GS1 DataMatrix. */
-internal fun createBarcodeScanner(): BarcodeScanner = BarcodeScanning.getClient(
+fun createBarcodeScanner(): BarcodeScanner = BarcodeScanning.getClient(
     BarcodeScannerOptions.Builder()
         .setBarcodeFormats(
             Barcode.FORMAT_EAN_13,
@@ -35,6 +37,8 @@ internal fun createBarcodeScanner(): BarcodeScanner = BarcodeScanning.getClient(
         .build(),
 )
 
+fun createTextRecognizer(): TextRecognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
+
 /** Frame analyzer; frames are dropped while the previous one is still being decoded. */
 internal class BarcodeAnalyzer(
     private val scanner: BarcodeScanner,
@@ -44,18 +48,35 @@ internal class BarcodeAnalyzer(
     override fun analyze(proxy: ImageProxy) {
         val media = proxy.image ?: return proxy.close()
         scanner.process(InputImage.fromMediaImage(media, proxy.imageInfo.rotationDegrees))
-            .addOnSuccessListener { codes ->
-                // Prefer GS1 DataMatrix: it also carries expiry and batch.
-                val best = codes.firstOrNull { it.format == Barcode.FORMAT_DATA_MATRIX } ?: codes.firstOrNull()
-                best?.rawValue?.let(onBarcode)
-            }
+            .addOnSuccessListener { codes -> codes.preferred()?.rawValue?.let(onBarcode) }
             .addOnCompleteListener { proxy.close() }
     }
 }
 
-/** Captures one still frame and runs on-device Latin text recognition on it. */
+/**
+ * Full read of one still image: on-device Latin OCR and barcode/DataMatrix detection on the
+ * same frame. Public so the device test can feed it a rendered label.
+ */
+suspend fun analyzeStill(image: InputImage, recognizer: TextRecognizer, scanner: BarcodeScanner): SideReading {
+    val text = recognizer.process(image).await()
+    val codes = scanner.process(image).await()
+    return SideReading(
+        lines = text.textBlocks.flatMap { block ->
+            block.lines.map { line -> RecognizedLine(line.text, line.boundingBox?.height() ?: 0) }
+        },
+        // GS1 DataMatrix first: it also carries expiry and batch.
+        barcodes = codes.sortedByDescending { it.format == Barcode.FORMAT_DATA_MATRIX }.mapNotNull { it.rawValue },
+    )
+}
+
+/** Captures one full-resolution still and analyses it. */
 @OptIn(ExperimentalGetImage::class)
-internal suspend fun captureAndReadText(capture: ImageCapture, executor: Executor): List<RecognizedLine> {
+internal suspend fun captureAndAnalyze(
+    capture: ImageCapture,
+    executor: Executor,
+    recognizer: TextRecognizer,
+    scanner: BarcodeScanner,
+): SideReading {
     val proxy = suspendCancellableCoroutine { cont ->
         capture.takePicture(
             executor,
@@ -65,18 +86,15 @@ internal suspend fun captureAndReadText(capture: ImageCapture, executor: Executo
             },
         )
     }
-    val recognizer = TextRecognition.getClient(TextRecognizerOptions.DEFAULT_OPTIONS)
     return try {
-        val media = proxy.image ?: return emptyList()
-        val text = recognizer.process(InputImage.fromMediaImage(media, proxy.imageInfo.rotationDegrees)).await()
-        text.textBlocks.flatMap { block ->
-            block.lines.map { line -> RecognizedLine(line.text, line.boundingBox?.height() ?: 0) }
-        }
+        val media = proxy.image ?: return SideReading(emptyList(), emptyList())
+        analyzeStill(InputImage.fromMediaImage(media, proxy.imageInfo.rotationDegrees), recognizer, scanner)
     } finally {
         proxy.close()
-        recognizer.close()
     }
 }
+
+private fun List<Barcode>.preferred(): Barcode? = firstOrNull { it.format == Barcode.FORMAT_DATA_MATRIX } ?: firstOrNull()
 
 private suspend fun <T> Task<T>.await(): T = suspendCancellableCoroutine { cont ->
     addOnSuccessListener { cont.resume(it) }

@@ -14,6 +14,7 @@ import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -23,6 +24,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Star
 import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.FilledIconToggleButton
 import androidx.compose.material3.Icon
@@ -45,6 +47,8 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.testTag
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.LiveRegionMode
 import androidx.compose.ui.semantics.liveRegion
@@ -59,7 +63,8 @@ import com.medishelf.core.ui.EmptyState
 import com.medishelf.core.ui.MediShelfTopBar
 import com.medishelf.feature.scan.camera.BarcodeAnalyzer
 import com.medishelf.feature.scan.camera.CameraPreview
-import com.medishelf.feature.scan.camera.captureAndReadText
+import com.medishelf.feature.scan.camera.captureAndAnalyze
+import com.medishelf.feature.scan.camera.createTextRecognizer
 import com.medishelf.feature.scan.camera.createBarcodeScanner
 import com.medishelf.feature.scan.navigation.ScanMode
 import kotlinx.coroutines.CancellationException
@@ -80,15 +85,15 @@ internal fun ScanScreen(
             onResult(it.result)
         }
     }
-    val title = stringResource(if (viewModel.mode == ScanMode.BARCODE) R.string.feature_scan_barcode_title else R.string.feature_scan_label_title)
+    val title = stringResource(if (viewModel.mode == ScanMode.BARCODE) R.string.feature_scan_barcode_title else R.string.feature_scan_pack_title)
     Scaffold(topBar = { MediShelfTopBar(title = title, onNavigateUp = onNavigateUp) }) { padding ->
         Box(Modifier.padding(padding).fillMaxSize()) {
             CameraPermissionGate {
                 when (val s = state) {
-                    is ScanUiState.LabelReview -> LabelReviewContent(
+                    is ScanUiState.Review -> PackReviewContent(
                         state = s,
                         onSelectionChange = viewModel::onSelectionChange,
-                        onConfirm = viewModel::onConfirmLabel,
+                        onConfirm = viewModel::onConfirm,
                         onRetake = viewModel::onRetry,
                     )
                     ScanUiState.NothingRead -> EmptyState(
@@ -97,7 +102,8 @@ internal fun ScanScreen(
                         actionLabel = stringResource(R.string.feature_scan_try_again),
                         onAction = viewModel::onRetry,
                     )
-                    else -> CameraContent(viewModel, isReading = s == ScanUiState.Reading)
+                    is ScanUiState.Camera -> CameraContent(viewModel, s)
+                    is ScanUiState.Done -> Unit
                 }
             }
         }
@@ -105,26 +111,25 @@ internal fun ScanScreen(
 }
 
 @Composable
-private fun CameraContent(viewModel: ScanViewModel, isReading: Boolean) {
+private fun CameraContent(viewModel: ScanViewModel, state: ScanUiState.Camera) {
     val executor = remember { Executors.newSingleThreadExecutor() }
     val scanner = remember { createBarcodeScanner() }
+    val recognizer = remember { createTextRecognizer() }
     DisposableEffect(Unit) {
         onDispose {
             scanner.close()
+            recognizer.close()
             executor.shutdown()
         }
     }
     val imageCapture = remember { ImageCapture.Builder().setCaptureMode(ImageCapture.CAPTURE_MODE_MAXIMIZE_QUALITY).build() }
     val useCases = remember(viewModel.mode) {
-        when (viewModel.mode) {
-            ScanMode.BARCODE -> listOf(
-                ImageAnalysis.Builder()
-                    .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
-                    .build()
-                    .apply { setAnalyzer(executor, BarcodeAnalyzer(scanner, viewModel::onBarcode)) },
-            )
-            ScanMode.LABEL -> listOf(imageCapture)
-        }
+        // Live barcode detection in both modes; PACK mode also takes full-resolution stills for OCR.
+        val analysis = ImageAnalysis.Builder()
+            .setBackpressureStrategy(ImageAnalysis.STRATEGY_KEEP_ONLY_LATEST)
+            .build()
+            .apply { setAnalyzer(executor, BarcodeAnalyzer(scanner, viewModel::onBarcode)) }
+        if (viewModel.mode == ScanMode.BARCODE) listOf(analysis) else listOf(analysis, imageCapture)
     }
     var camera by remember { mutableStateOf<Camera?>(null) }
     var unavailable by remember { mutableStateOf(false) }
@@ -145,12 +150,12 @@ private fun CameraContent(viewModel: ScanViewModel, isReading: Boolean) {
             onCameraUnavailable = { unavailable = true },
             modifier = Modifier.fillMaxSize(),
         )
-        // Framing guide: wide for barcodes, tall-ish for box labels.
+        // Framing guide: wide for barcodes, a whole box side for pack photos.
         Box(
             Modifier
                 .align(Alignment.Center)
-                .fillMaxWidth(0.8f)
-                .aspectRatio(if (viewModel.mode == ScanMode.BARCODE) 1.6f else 1.2f)
+                .fillMaxWidth(if (viewModel.mode == ScanMode.BARCODE) 0.8f else 0.9f)
+                .aspectRatio(if (viewModel.mode == ScanMode.BARCODE) 1.6f else 0.9f)
                 .border(3.dp, Color.White, RoundedCornerShape(16.dp)),
         )
         Column(
@@ -158,20 +163,30 @@ private fun CameraContent(viewModel: ScanViewModel, isReading: Boolean) {
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Surface(color = MaterialTheme.colorScheme.surface.copy(alpha = 0.9f), shape = RoundedCornerShape(12.dp)) {
-                Text(
-                    text = stringResource(
-                        when {
-                            isReading -> R.string.feature_scan_reading
-                            viewModel.mode == ScanMode.BARCODE -> R.string.feature_scan_barcode_hint
-                            else -> R.string.feature_scan_label_hint
+            Surface(color = MaterialTheme.colorScheme.surface.copy(alpha = 0.92f), shape = RoundedCornerShape(12.dp)) {
+                Column(
+                    Modifier.padding(12.dp).semantics(mergeDescendants = true) { liveRegion = LiveRegionMode.Polite },
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(4.dp),
+                ) {
+                    Text(
+                        text = when {
+                            state.reading -> stringResource(R.string.feature_scan_reading)
+                            viewModel.mode == ScanMode.BARCODE -> stringResource(R.string.feature_scan_barcode_hint)
+                            state.lastSideEmpty -> stringResource(R.string.feature_scan_side_empty)
+                            state.sides == 0 -> stringResource(R.string.feature_scan_pack_hint)
+                            else -> pluralStringResource(R.plurals.feature_scan_sides_captured, state.sides, state.sides)
                         },
-                    ),
-                    textAlign = TextAlign.Center,
-                    modifier = Modifier
-                        .padding(12.dp)
-                        .semantics { liveRegion = LiveRegionMode.Polite },
-                )
+                        textAlign = TextAlign.Center,
+                    )
+                    if (viewModel.mode == ScanMode.PACK && state.barcode != null) {
+                        Text(
+                            stringResource(R.string.feature_scan_barcode_found, state.barcode),
+                            style = MaterialTheme.typography.labelLarge,
+                            color = MaterialTheme.colorScheme.primary,
+                        )
+                    }
+                }
             }
             if (camera?.cameraInfo?.hasFlashUnit() == true) {
                 FilledIconToggleButton(
@@ -184,22 +199,34 @@ private fun CameraContent(viewModel: ScanViewModel, isReading: Boolean) {
                     Icon(Icons.Filled.Star, contentDescription = stringResource(R.string.feature_scan_torch))
                 }
             }
-            if (viewModel.mode == ScanMode.LABEL) {
-                if (isReading) {
+            if (viewModel.mode == ScanMode.PACK) {
+                if (state.reading) {
                     CircularProgressIndicator()
                 } else {
-                    Button(onClick = {
-                        viewModel.onLabelCaptureStarted()
-                        scope.launch {
-                            try {
-                                viewModel.onLabelRead(captureAndReadText(imageCapture, executor))
-                            } catch (e: CancellationException) {
-                                throw e
-                            } catch (e: Exception) {
-                                viewModel.onLabelFailed()
-                            }
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        Button(
+                            onClick = {
+                                viewModel.onSideCaptureStarted()
+                                scope.launch {
+                                    try {
+                                        viewModel.onSideRead(captureAndAnalyze(imageCapture, executor, recognizer, scanner))
+                                    } catch (e: CancellationException) {
+                                        throw e
+                                    } catch (e: Exception) {
+                                        viewModel.onSideFailed()
+                                    }
+                                }
+                            },
+                            modifier = Modifier.testTag("capture_side"),
+                        ) {
+                            Text(stringResource(if (state.sides == 0) R.string.feature_scan_capture else R.string.feature_scan_capture_another))
                         }
-                    }) { Text(stringResource(R.string.feature_scan_capture)) }
+                        OutlinedButton(
+                            onClick = viewModel::onFinishPack,
+                            enabled = state.sides > 0 || state.barcode != null,
+                            modifier = Modifier.testTag("finish_pack"),
+                        ) { Text(stringResource(R.string.feature_scan_done)) }
+                    }
                 }
             }
         }
