@@ -23,6 +23,8 @@ data class MedicineDetails(
     val assignments: List<MedicineAssignment> = emptyList(),
     val location: StorageLocation? = null,
     val photos: List<MedicinePhoto> = emptyList(),
+    /** Resolved [Medicine.prescribedForMemberId]. */
+    val prescribedFor: FamilyMember? = null,
 ) {
     val conditions: List<String>
         get() = assignments.mapNotNull { it.condition?.takeIf(String::isNotBlank) }.distinct()

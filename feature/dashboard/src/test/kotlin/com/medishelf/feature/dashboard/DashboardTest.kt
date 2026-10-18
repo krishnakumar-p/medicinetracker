@@ -13,6 +13,9 @@ import com.medishelf.core.designsystem.theme.MediShelfTheme
 import com.medishelf.core.domain.usecase.ObserveDashboardCountsUseCase
 import com.medishelf.core.domain.usecase.ObserveMedicinesUseCase
 import com.medishelf.core.model.MedicineStatus
+import com.medishelf.core.domain.usecase.ObserveDoseDayUseCase
+import com.medishelf.core.testing.FakeDoseRepository
+import com.medishelf.core.testing.FakeFamilyMemberRepository
 import com.medishelf.core.testing.FakeMedicineRepository
 import com.medishelf.core.testing.TestTimeProvider
 import com.medishelf.core.testing.testMedicine
@@ -30,6 +33,7 @@ class DashboardTest {
         ObserveDashboardCountsUseCase(medicines, time),
         ObserveMedicinesUseCase(medicines, time),
         com.medishelf.core.testing.FakeSettingsRepository(),
+        ObserveDoseDayUseCase(FakeDoseRepository(medicines), medicines, FakeFamilyMemberRepository(), time),
         time,
     )
 

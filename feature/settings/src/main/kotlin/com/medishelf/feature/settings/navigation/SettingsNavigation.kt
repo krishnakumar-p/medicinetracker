@@ -13,8 +13,18 @@ data object SettingsRoute
 fun NavController.navigateToSettings(navOptions: NavOptions? = null) = navigate(SettingsRoute, navOptions)
 
 /** [showDeveloperOptions] is BuildConfig.DEBUG from the app: demo data never ships in release UI. */
-fun NavGraphBuilder.settingsScreen(onOpenAppLock: () -> Unit, showDeveloperOptions: Boolean, versionName: String) {
+fun NavGraphBuilder.settingsScreen(
+    onOpenAppLock: () -> Unit,
+    showDeveloperOptions: Boolean,
+    versionName: String,
+    onNavigateUp: () -> Unit,
+) {
     composable<SettingsRoute> {
-        SettingsScreen(onOpenAppLock = onOpenAppLock, showDeveloperOptions = showDeveloperOptions, versionName = versionName)
+        SettingsScreen(
+            onOpenAppLock = onOpenAppLock,
+            showDeveloperOptions = showDeveloperOptions,
+            versionName = versionName,
+            onNavigateUp = onNavigateUp,
+        )
     }
 }

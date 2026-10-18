@@ -3,11 +3,13 @@ package com.medishelf.di
 import com.medishelf.core.common.TimeProvider
 import com.medishelf.core.data.di.DataModule
 import com.medishelf.core.domain.repository.ConditionSuggestionRepository
+import com.medishelf.core.domain.repository.DoseRepository
 import com.medishelf.core.domain.repository.FamilyMemberRepository
 import com.medishelf.core.domain.repository.MedicineRepository
 import com.medishelf.core.domain.repository.PhotoStore
 import com.medishelf.core.domain.repository.StorageLocationRepository
 import com.medishelf.core.testing.FakeConditionSuggestionRepository
+import com.medishelf.core.testing.FakeDoseRepository
 import com.medishelf.core.testing.FakeFamilyMemberRepository
 import com.medishelf.core.testing.FakeMedicineRepository
 import com.medishelf.core.testing.FakePhotoStore
@@ -30,6 +32,8 @@ object TestDataModule {
     @Provides fun memberRepository(fake: FakeFamilyMemberRepository): FamilyMemberRepository = fake
     @Provides fun locationRepository(fake: FakeStorageLocationRepository): StorageLocationRepository = fake
     @Provides fun medicineRepository(fake: FakeMedicineRepository): MedicineRepository = fake
+    @Provides @Singleton fun doses(m: FakeMedicineRepository) = FakeDoseRepository(m)
+    @Provides fun doseRepository(fake: FakeDoseRepository): DoseRepository = fake
     @Provides @Singleton fun suggestions(): ConditionSuggestionRepository = FakeConditionSuggestionRepository()
     @Provides @Singleton fun photos(): PhotoStore = FakePhotoStore()
     @Provides @Singleton fun time(): TimeProvider = TestTimeProvider()

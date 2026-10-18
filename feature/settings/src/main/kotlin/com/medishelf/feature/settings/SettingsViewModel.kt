@@ -2,6 +2,7 @@ package com.medishelf.feature.settings
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.medishelf.core.common.ApplicationScope
 import com.medishelf.core.common.TimeProvider
 import com.medishelf.core.domain.backup.BackupService
 import com.medishelf.core.domain.backup.BackupSummary
@@ -26,6 +27,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 import javax.inject.Inject
 
@@ -61,6 +63,8 @@ class SettingsViewModel @Inject constructor(
     private val reminderTrigger: ReminderTrigger,
     private val time: TimeProvider,
     members: FamilyMemberRepository,
+    // Settings is a pushed screen: backups, restores and demo data must finish even if the user leaves it.
+    @ApplicationScope private val appScope: CoroutineScope,
 ) : ViewModel() {
 
     private val busy = MutableStateFlow(false)
@@ -122,7 +126,7 @@ class SettingsViewModel @Inject constructor(
         }
     }
 
-    fun onDemoDataChange(enabled: Boolean) = viewModelScope.launch {
+    fun onDemoDataChange(enabled: Boolean) = appScope.launch {
         busy.value = true
         try {
             if (enabled) demoData.load() else demoData.clear()
@@ -162,7 +166,7 @@ class SettingsViewModel @Inject constructor(
     }
 
     private fun run(block: suspend () -> SettingsMessage) {
-        viewModelScope.launch {
+        appScope.launch {
             busy.value = true
             message.value = try {
                 block()

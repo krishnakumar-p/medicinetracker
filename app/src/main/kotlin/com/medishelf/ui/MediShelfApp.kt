@@ -20,15 +20,14 @@ import androidx.compose.ui.res.stringResource
 import androidx.navigation.NavDestination
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
-import androidx.navigation.NavGraph.Companion.findStartDestination
 import androidx.navigation.NavHostController
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
-import androidx.navigation.navOptions
 import com.medishelf.feature.medicines.navigation.MedicineListPreset
 import com.medishelf.feature.medicines.navigation.navigateToMedicineList
 import com.medishelf.navigation.MediShelfNavHost
 import com.medishelf.navigation.TopLevelDestination
+import com.medishelf.navigation.navigateToTopLevel
 
 @Composable
 fun MediShelfApp(
@@ -85,16 +84,5 @@ fun MediShelfApp(
 
 private fun NavDestination?.isInHierarchy(destination: TopLevelDestination): Boolean =
     this?.hierarchy?.any { it.hasRoute(destination.routeClass) } == true
-
-private fun NavHostController.navigateToTopLevel(destination: TopLevelDestination) {
-    navigate(
-        destination.route,
-        navOptions {
-            popUpTo(graph.findStartDestination().id) { saveState = true }
-            launchSingleTop = true
-            restoreState = true
-        },
-    )
-}
 
 private const val MAX_NAV_LABEL_SCALE = 1.3f

@@ -52,6 +52,9 @@
     <string name="feature_settings_csv_col_people">For (condition)</string>
     <string name="feature_settings_csv_col_dosage">Dosage</string>
     <string name="feature_settings_csv_col_doctor">Prescribed by</string>
+    <string name="feature_settings_csv_col_prescribed_for">Prescribed for</string>
+    <string name="feature_settings_csv_col_rx_start">Prescription start</string>
+    <string name="feature_settings_csv_col_rx_end">Prescription end</string>
     <string name="feature_settings_csv_col_rx">Prescription</string>
     <string name="feature_settings_csv_col_location">Location</string>
     <string name="feature_settings_csv_col_batch">Batch</string>

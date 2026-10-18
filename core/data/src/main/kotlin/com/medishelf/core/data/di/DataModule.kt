@@ -11,6 +11,8 @@ import com.medishelf.core.data.repository.RoomDemoData
 import com.medishelf.core.domain.backup.DocumentStorage
 import com.medishelf.core.domain.demo.DemoData
 import com.medishelf.core.data.repository.RoomConditionSuggestionRepository
+import com.medishelf.core.data.repository.RoomDoseRepository
+import com.medishelf.core.domain.repository.DoseRepository
 import com.medishelf.core.data.repository.RoomFamilyMemberRepository
 import com.medishelf.core.data.repository.RoomMedicineRepository
 import com.medishelf.core.data.repository.RoomStorageLocationRepository
@@ -35,6 +37,7 @@ import javax.inject.Singleton
 @InstallIn(SingletonComponent::class)
 abstract class DataModule {
     @Binds internal abstract fun medicineRepository(impl: RoomMedicineRepository): MedicineRepository
+    @Binds internal abstract fun doseRepository(impl: RoomDoseRepository): DoseRepository
     @Binds internal abstract fun familyMemberRepository(impl: RoomFamilyMemberRepository): FamilyMemberRepository
     @Binds internal abstract fun storageLocationRepository(impl: RoomStorageLocationRepository): StorageLocationRepository
     @Binds internal abstract fun conditionSuggestionRepository(impl: RoomConditionSuggestionRepository): ConditionSuggestionRepository

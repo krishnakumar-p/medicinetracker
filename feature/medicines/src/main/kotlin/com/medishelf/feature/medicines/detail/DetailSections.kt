@@ -25,11 +25,14 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import coil3.compose.AsyncImage
+import com.medishelf.core.model.DoseSchedule
+import com.medishelf.core.model.DoseScheduleKind
 import com.medishelf.core.model.MedicineDetails
 import com.medishelf.core.model.MedicineEvent
 import com.medishelf.core.ui.MemberAvatar
@@ -43,7 +46,7 @@ import java.time.LocalDate
 import java.time.ZoneId
 
 @Composable
-internal fun DetailSections(details: MedicineDetails, today: LocalDate) {
+internal fun DetailSections(details: MedicineDetails, today: LocalDate, schedules: List<DoseSchedule> = emptyList()) {
     val m = details.medicine
     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
         DetailCard(stringResource(R.string.feature_medicines_section_stock)) {
@@ -82,11 +85,30 @@ internal fun DetailSections(details: MedicineDetails, today: LocalDate) {
                 }
             }
         }
-        if (m.isPrescription || m.prescribedBy.isNotBlank() || m.dosageInstructions.isNotBlank() || m.prescriptionDate != null) {
+        val prescribedFor = listOfNotNull(details.prescribedFor?.name, m.prescribedForReason.takeIf(String::isNotBlank)).joinToString(" · ")
+        if (m.isPrescription || m.prescribedBy.isNotBlank() || m.dosageInstructions.isNotBlank() || m.prescriptionDate != null ||
+            prescribedFor.isNotEmpty() || m.prescriptionStartDate != null || m.prescriptionEndDate != null || schedules.isNotEmpty()
+        ) {
             DetailCard(stringResource(R.string.feature_medicines_section_prescription)) {
                 if (m.isPrescription) Text(stringResource(R.string.feature_medicines_prescription_only))
                 if (m.prescribedBy.isNotBlank()) DetailRow(stringResource(R.string.feature_medicines_field_prescribed_by), m.prescribedBy)
+                if (prescribedFor.isNotEmpty()) DetailRow(stringResource(R.string.feature_medicines_prescribed_for), prescribedFor)
                 m.prescriptionDate?.let { DetailRow(stringResource(R.string.feature_medicines_field_prescription_date), it.formatMedium()) }
+                m.prescriptionStartDate?.let { DetailRow(stringResource(R.string.feature_medicines_field_prescription_start), it.formatMedium()) }
+                m.prescriptionEndDate?.let { DetailRow(stringResource(R.string.feature_medicines_field_prescription_end), it.formatMedium()) }
+                schedules.forEach { s ->
+                    val label = stringResource(
+                        if (s.kind == DoseScheduleKind.CONTINUOUS) R.string.feature_medicines_continuous_dose else R.string.feature_medicines_course_dose,
+                    )
+                    val amount = stringResource(
+                        R.string.feature_medicines_dose_value,
+                        s.dosePerIntake.formatQuantity(),
+                        m.unit.label(),
+                        pluralStringResource(R.plurals.feature_medicines_times_per_day, s.timesPerDay, s.timesPerDay),
+                    )
+                    val until = s.endDate?.let { stringResource(R.string.feature_medicines_dose_until, it.formatMedium()) }
+                    DetailRow(label, listOfNotNull(amount, until).joinToString(" · "))
+                }
                 if (m.dosageInstructions.isNotBlank()) DetailRow(stringResource(R.string.feature_medicines_field_dosage), m.dosageInstructions)
             }
         }

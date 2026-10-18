@@ -71,6 +71,26 @@
     <string name="feature_medicines_prescription_only">Prescription medicine</string>
     <string name="feature_medicines_field_prescribed_by">Prescribed by (doctor)</string>
     <string name="feature_medicines_field_prescription_date">Prescription date</string>
+    <string name="feature_medicines_prescribed_for">Prescribed for</string>
+    <string name="feature_medicines_field_prescribed_for_person">Person</string>
+    <string name="feature_medicines_prescribed_for_nobody">Not set</string>
+    <string name="feature_medicines_field_prescribed_for_reason">Reason or condition</string>
+    <string name="feature_medicines_field_prescription_start">Start date</string>
+    <string name="feature_medicines_field_prescription_end">End date</string>
+    <string name="feature_medicines_prescription_end_help">Leave empty for an ongoing prescription</string>
+    <string name="feature_medicines_take_regularly">Take regularly</string>
+    <string name="feature_medicines_course_dose">Course dose</string>
+    <string name="feature_medicines_continuous_dose">Continuous dose</string>
+    <string name="feature_medicines_dose_value">%1$s %2$s, %3$s</string>
+    <string name="feature_medicines_dose_until">until %1$s</string>
+    <plurals name="feature_medicines_times_per_day">
+        <item quantity="one">once a day</item>
+        <item quantity="other">%d times a day</item>
+    </plurals>
+    <string name="feature_medicines_track_doses">Dose tracking (optional)</string>
+    <string name="feature_medicines_track_doses_help">Enter the dose to list it under Doses each day until the end date. Stock goes down only when you tick a dose as taken.</string>
+    <string name="feature_medicines_field_dose_amount">Dose (%1$s)</string>
+    <string name="feature_medicines_field_doses_per_day">Times per day</string>
     <string name="feature_medicines_field_dosage">Dosage instructions</string>
     <string name="feature_medicines_field_location">Storage location</string>
     <string name="feature_medicines_location_refrigerated">%1$s (keep refrigerated)</string>
@@ -89,6 +109,10 @@
     <string name="feature_medicines_error_opened_future">Opened date can\'t be in the future</string>
     <string name="feature_medicines_error_use_within">Enter a whole number of days above 0</string>
     <string name="feature_medicines_error_prescription_future">Prescription date can\'t be in the future</string>
+    <string name="feature_medicines_error_end_before_start">End date must be on or after the start date</string>
+    <string name="feature_medicines_error_dose">Enter a dose above 0</string>
+    <string name="feature_medicines_error_doses_per_day">Enter 1 to 12 times a day</string>
+    <string name="feature_medicines_error_dose_incomplete">Enter both the dose and times per day, or neither</string>
     <string name="feature_medicines_history_delta">−%1$s</string>
     <string name="feature_medicines_add_photo">Add photo</string>
     <string name="feature_medicines_photo_type_title">What does the photo show?</string>

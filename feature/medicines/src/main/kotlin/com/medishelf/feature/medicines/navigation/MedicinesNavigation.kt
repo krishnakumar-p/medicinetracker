@@ -37,12 +37,13 @@ fun NavGraphBuilder.medicinesScreens(
     onMedicineSaved: (Long, isNew: Boolean) -> Unit,
     onScanBarcode: () -> Unit,
     onScanPack: () -> Unit,
+    onTakeRegularly: (Long) -> Unit = {},
 ) {
     composable<MedicineListRoute> {
         MedicineListScreen(onMedicineClick = onMedicineClick, onAddMedicine = onAddMedicine)
     }
     composable<MedicineDetailRoute> {
-        MedicineDetailScreen(onNavigateUp = onNavigateUp, onEdit = onEditMedicine)
+        MedicineDetailScreen(onNavigateUp = onNavigateUp, onEdit = onEditMedicine, onTakeRegularly = onTakeRegularly)
     }
     composable<MedicineEditRoute> {
         MedicineEditScreen(

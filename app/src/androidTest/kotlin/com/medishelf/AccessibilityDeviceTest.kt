@@ -46,15 +46,23 @@ class AccessibilityDeviceTest {
         compose.onNodeWithTag("disclaimer_continue").performClick()
 
         waitForText("Add medicine")
-        compose.onNodeWithTag("nav_SETTINGS").performClick()
+        compose.onNodeWithTag("open_settings").performClick()
         compose.onNodeWithText("Demo data").performScrollTo().performClick()
+        compose.onNodeWithContentDescription("Navigate up").performClick()
         compose.onNodeWithTag("nav_MEDICINES").performClick()
         waitForText("Augmentin")
 
-        listOf("nav_HOME", "nav_MEDICINES", "nav_WHERE", "nav_FAMILY", "nav_SETTINGS").forEach {
+        listOf("nav_HOME", "nav_MEDICINES", "nav_DOSES", "nav_WHERE", "nav_FAMILY").forEach {
             compose.onNodeWithTag(it).performClick()
             audit()
         }
+        compose.onNodeWithTag("nav_HOME").performClick()
+        compose.onNodeWithTag("open_settings").performClick()
+        audit()
+        compose.onNodeWithContentDescription("Navigate up").performClick()
+        compose.onNodeWithTag("open_search").performClick()
+        audit()
+        compose.onNodeWithContentDescription("Navigate up").performClick()
         compose.onNodeWithTag("nav_MEDICINES").performClick()
         compose.onAllNodesWithText("Augmentin", substring = true).onFirst().performClick()
         audit()

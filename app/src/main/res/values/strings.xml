@@ -5,7 +5,7 @@
     <string name="nav_medicines">Medicines</string>
     <string name="nav_where">Where</string>
     <string name="nav_family">Family</string>
-    <string name="nav_settings">Settings</string>
+    <string name="nav_doses">Doses</string>
     <string name="recovery_title">Your records can\'t be unlocked</string>
     <string name="recovery_body">MediShelf\'s encryption key on this phone was reset, which can happen after a factory reset, a security update or restoring the phone from a backup. The saved records can no longer be read.</string>
     <string name="recovery_restore_hint">If you exported a MediShelf backup, start fresh and then import it from Settings &gt; Backup.</string>

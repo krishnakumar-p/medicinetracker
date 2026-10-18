@@ -6,6 +6,7 @@ import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.medishelf.core.common.TimeProvider
 import com.medishelf.core.domain.repository.ConditionSuggestionRepository
+import com.medishelf.core.domain.repository.DoseRepository
 import com.medishelf.core.domain.repository.FamilyMemberRepository
 import com.medishelf.core.domain.repository.MedicineRepository
 import com.medishelf.core.domain.repository.StorageLocationRepository
@@ -14,6 +15,7 @@ import com.medishelf.core.domain.usecase.SaveMedicineUseCase
 import com.medishelf.core.domain.usecase.SaveResult
 import com.medishelf.core.domain.validation.MedicineValidationError
 import com.medishelf.core.domain.validation.MedicineValidator
+import com.medishelf.core.model.DoseScheduleKind
 import com.medishelf.core.model.FamilyMember
 import com.medishelf.core.model.ScanSuggestion
 import com.medishelf.core.model.StorageLocation
@@ -34,7 +36,7 @@ import javax.inject.Inject
 /** Fields filled by a camera scan; the editor flags them for the user to check. */
 enum class ScannedField {
     BARCODE, NAME, GENERIC, STRENGTH, FORM, QUANTITY, MANUFACTURER, EXPIRY, BATCH, PRESCRIPTION, DOSAGE, NOTES,
-    USE_WITHIN, PRESCRIBER, PRESCRIPTION_DATE, PURCHASE_DATE, PEOPLE, LOCATION,
+    USE_WITHIN, PRESCRIBER, PRESCRIPTION_DATE, PURCHASE_DATE, PEOPLE, LOCATION, PRESCRIBED_FOR,
 }
 
 data class MedicineEditUiState(
@@ -64,6 +66,7 @@ private data class EditMeta(
 class MedicineEditViewModel @Inject constructor(
     private val savedStateHandle: SavedStateHandle,
     private val medicines: MedicineRepository,
+    private val doses: DoseRepository,
     private val members: FamilyMemberRepository,
     private val locations: StorageLocationRepository,
     suggestions: ConditionSuggestionRepository,
@@ -103,7 +106,9 @@ class MedicineEditViewModel @Inject constructor(
     init {
         viewModelScope.launch {
             if (route.id != 0L) {
-                medicines.get(route.id)?.let { form.value = MedicineFormState.from(it) }
+                medicines.get(route.id)?.let { details ->
+                    form.value = MedicineFormState.from(details, doses.findSchedule(route.id, DoseScheduleKind.PRESCRIPTION))
+                }
             }
             meta.update { it.copy(isLoading = false) }
         }
@@ -161,7 +166,13 @@ class MedicineEditViewModel @Inject constructor(
                 if (f.prescriptionDate == null) { f = f.copy(prescriptionDate = dispensed); scanned += ScannedField.PRESCRIPTION_DATE }
                 if (f.purchaseDate == null) { f = f.copy(purchaseDate = dispensed); scanned += ScannedField.PURCHASE_DATE }
             }
-            // Pharmacy label names the patient: tick that family member, with the condition if known.
+            // Pharmacy label: the patient and condition are who and what the prescription is for.
+            if (patient != null && f.prescribedForMemberId == null) {
+                f = f.copy(prescribedForMemberId = patient.id)
+                scanned += ScannedField.PRESCRIBED_FOR
+            }
+            fill(ScannedField.PRESCRIBED_FOR, scan.condition, f.prescribedForReason.isBlank()) { f = f.copy(prescribedForReason = it) }
+            // Also tick that family member, with the condition if known.
             if (patient != null && patient.id !in f.assignments) {
                 f = f.copy(assignments = f.assignments + (patient.id to scan.condition.orEmpty()))
                 scanned += ScannedField.PEOPLE

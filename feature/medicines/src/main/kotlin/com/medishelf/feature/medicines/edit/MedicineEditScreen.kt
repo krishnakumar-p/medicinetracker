@@ -277,47 +277,7 @@ internal fun MedicineEditContent(state: MedicineEditUiState, actions: MedicineEd
                 }
             }
 
-            FormCard(stringResource(R.string.feature_medicines_section_prescription)) {
-                Row(
-                    Modifier
-                        .fillMaxWidth()
-                        .heightIn(min = 48.dp).toggleable(
-                            value = form.isPrescription,
-                            role = Role.Switch,
-                            onValueChange = { v -> update { it.copy(isPrescription = v) } },
-                        ),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Column(Modifier.weight(1f)) {
-                        Text(stringResource(R.string.feature_medicines_field_is_prescription))
-                        scannedNote(ScannedField.PRESCRIPTION in state.scannedFields)?.let {
-                            Text(it, style = MaterialTheme.typography.bodySmall, color = MaterialTheme.colorScheme.onSurfaceVariant)
-                        }
-                    }
-                    Switch(checked = form.isPrescription, onCheckedChange = null)
-                }
-                TextInput(
-                    label = stringResource(R.string.feature_medicines_field_prescribed_by),
-                    value = form.prescribedBy,
-                    onValueChange = { v -> update { it.copy(prescribedBy = v) } },
-                    supporting = scannedNote(ScannedField.PRESCRIBER in state.scannedFields),
-                    capitalization = KeyboardCapitalization.Words,
-                )
-                DateField(
-                    label = stringResource(R.string.feature_medicines_field_prescription_date),
-                    date = form.prescriptionDate,
-                    onDateChange = { v -> update { it.copy(prescriptionDate = v) } },
-                    errorText = errors.messageFor(PRESCRIPTION_IN_FUTURE),
-                    supportingText = scannedNote(ScannedField.PRESCRIPTION_DATE in state.scannedFields),
-                )
-                TextInput(
-                    label = stringResource(R.string.feature_medicines_field_dosage),
-                    value = form.dosageInstructions,
-                    onValueChange = { v -> update { it.copy(dosageInstructions = v) } },
-                    supporting = scannedNote(ScannedField.DOSAGE in state.scannedFields),
-                    singleLine = false,
-                )
-            }
+            PrescriptionSection(state, update)
 
             FormCard(stringResource(R.string.feature_medicines_section_storage)) {
                 val locationOptions = listOf(null) + state.locations.map { it.id }
@@ -373,7 +333,7 @@ private fun ScanCard(state: MedicineEditUiState, actions: MedicineEditActions) {
 }
 
 @Composable
-private fun scannedNote(scanned: Boolean): String? =
+internal fun scannedNote(scanned: Boolean): String? =
     if (scanned) stringResource(R.string.feature_medicines_scanned_field) else null
 
 @OptIn(ExperimentalLayoutApi::class)
@@ -404,7 +364,7 @@ private fun ConditionInput(
 }
 
 @Composable
-private fun FormCard(title: String, content: @Composable () -> Unit) {
+internal fun FormCard(title: String, content: @Composable () -> Unit) {
     Card(Modifier.fillMaxWidth()) {
         Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(12.dp)) {
             Text(title, style = MaterialTheme.typography.titleMedium)
@@ -414,7 +374,7 @@ private fun FormCard(title: String, content: @Composable () -> Unit) {
 }
 
 @Composable
-private fun TextInput(
+internal fun TextInput(
     label: String,
     value: String,
     onValueChange: (String) -> Unit,
@@ -445,7 +405,7 @@ private fun TextInput(
 }
 
 @Composable
-private fun Set<MedicineValidationError>.messageFor(vararg candidates: MedicineValidationError): String? =
+internal fun Set<MedicineValidationError>.messageFor(vararg candidates: MedicineValidationError): String? =
     candidates.firstOrNull { it in this }?.let { stringResource(it.messageRes()) }
 
 private fun MedicineValidationError.messageRes(): Int = when (this) {
@@ -461,6 +421,10 @@ private fun MedicineValidationError.messageRes(): Int = when (this) {
     OPENED_IN_FUTURE -> R.string.feature_medicines_error_opened_future
     USE_WITHIN_NOT_POSITIVE -> R.string.feature_medicines_error_use_within
     PRESCRIPTION_IN_FUTURE -> R.string.feature_medicines_error_prescription_future
+    MedicineValidationError.PRESCRIPTION_END_BEFORE_START -> R.string.feature_medicines_error_end_before_start
+    MedicineValidationError.DOSE_NOT_POSITIVE -> R.string.feature_medicines_error_dose
+    MedicineValidationError.DOSES_PER_DAY_INVALID -> R.string.feature_medicines_error_doses_per_day
+    MedicineValidationError.DOSE_INCOMPLETE -> R.string.feature_medicines_error_dose_incomplete
 }
 
 private const val MAX_SUGGESTIONS = 5

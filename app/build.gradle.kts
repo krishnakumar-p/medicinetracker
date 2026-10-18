@@ -101,6 +101,8 @@ dependencies {
     implementation(projects.feature.lock)
     implementation(projects.feature.dashboard)
     implementation(projects.feature.medicines)
+    implementation(projects.feature.doses)
+    implementation(projects.feature.search)
     implementation(projects.feature.scan)
     implementation(projects.feature.locations)
     implementation(projects.feature.family)

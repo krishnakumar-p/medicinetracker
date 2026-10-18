@@ -8,12 +8,25 @@ have, who it is for and for which condition, where it is kept, and when it expir
 ## Features
 
 - **Inventory**: brand/generic name, strength, form, batch, barcode, quantity and low-stock
-  threshold, purchase/expiry/opened dates with "use within X days of opening", prescriber,
-  dosage, storage location, photos (box, strip, prescription), notes.
+  threshold, purchase/expiry/opened dates with "use within X days of opening", storage
+  location, photos (box, strip, prescription), notes.
+- **Prescriptions**: prescriber, **prescribed for** (family member and reason/condition),
+  prescription date, course **start and end dates**, dosage directions, and an optional course
+  dose (amount × times per day).
 - **People and conditions**: link a medicine to one or more family members, each with the
   condition it treats; per-person view of current and past medicines; allergies shown up front.
 - **Where is it?**: everything grouped by storage location (fridge locations flagged).
-- **Dashboard**: expired / expiring in 30 days / low-stock counts, and what needs attention.
+- **Dashboard**: expired / expiring in 30 days / low-stock counts, today's doses, and what
+  needs attention.
+- **Doses (continuous medication)**: record medicines taken every day (dose, times per day,
+  who takes it, start and optional end). Prescriptions with a course dose are listed until their
+  end date. Each dose is ticked off by hand, and **stock goes down only for doses confirmed as
+  taken** (un-ticking puts it back). Medicines without a schedule are never touched. Shows days
+  of stock left and warns when a course would run out before its end date.
+- **Global search**: one search over medicine name, composition, strength, doctor, who and what
+  it is prescribed for, conditions, people, allergies, storage places, manufacturer, batch,
+  barcode, dosage and notes. Case- and accent-insensitive, every word must match, results say
+  which field matched, and finished/disposed medicines appear last.
 - **Search and filters**: by name, ingredient, condition or person; filter by person, location,
   status, form, expiry window, low stock; sort by expiry or name.
 - **Scan pack (on-device only)**: photograph each side of the box; every photo gets full OCR
@@ -114,6 +127,8 @@ graph TD
     subgraph Features
         dashboard[":feature:dashboard"]
         medicines[":feature:medicines<br/>list · detail · editor"]
+        doses[":feature:doses<br/>today's doses · continuous"]
+        search[":feature:search<br/>global search"]
         scan[":feature:scan<br/>CameraX + ML Kit"]
         locations[":feature:locations"]
         family[":feature:family"]
@@ -161,6 +176,8 @@ graph TD
 | App lock | A root gate replaces the whole navigation tree while locked, so deep links and back stacks can't bypass it. |
 | Reminders | `ReminderPlanner` (pure Kotlin) fires each threshold once, survives missed days, and re-arms after edits or restocking. |
 | Backup | `manifest.json` + `data.json` + `photos/` in an AES-256 zip (opens in 7-Zip with the password). Restore validates everything first, replaces data in one transaction, and blocks zip-slip and oversized entries. Settings and the PIN are not included. |
+| Doses | `dose_schedules` + `dose_logs` (unique per schedule/day/slot). Ticking a dose writes the log and lowers stock in one transaction, so a dose can't be counted twice. A prescription's course dose is kept as a schedule that ends on the prescription end date. |
+| Migrations | Room auto-migration 1 → 2 (new columns and tables only), checked by `MigrationTestHelper` against the exported schemas. Backups are format 2; format 1 files still restore. |
 
 ### Project structure
 
@@ -176,7 +193,7 @@ core/
   notifications/ work/    reminder notifications, daily WorkManager job
   designsystem/ ui/       theme and status colours, shared composables
   testing/                fakes and test helpers
-feature/                  dashboard, medicines, scan, locations, family, settings, lock, onboarding
+feature/                  dashboard, medicines, doses, search, scan, locations, family, settings, lock, onboarding
 gradle/libs.versions.toml version catalog
 scripts/                  build_lexicon.py (refreshes the FDA lexicons)
 ```
@@ -285,4 +302,6 @@ When updating an action, pin the new release's SHA, not a moving tag.
 - If the Android Keystore is wiped (factory reset, some security updates), the encrypted
   database can't be opened. The app explains this and offers to start fresh so a backup can
   be restored, which is why regular backups matter.
+- Doses are confirmed by hand; there are no dose-time notifications yet, and only today's doses
+  can be ticked (a missed day can be corrected with "Mark used" on the medicine).
 - English only. All text is in `strings.xml`, ready for translation.

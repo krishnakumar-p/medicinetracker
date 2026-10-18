@@ -2,6 +2,7 @@ package com.medishelf.core.database.dao
 
 import androidx.room.Dao
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Upsert
 import com.medishelf.core.database.entity.ConditionSuggestionEntity
 import com.medishelf.core.database.entity.FamilyMemberEntity
@@ -20,7 +21,17 @@ interface FamilyMemberDao {
     suspend fun upsert(member: FamilyMemberEntity): Long
 
     @Query("DELETE FROM family_members WHERE id = :id")
-    suspend fun delete(id: Long)
+    suspend fun deleteRow(id: Long)
+
+    @Query("UPDATE medicines SET prescribed_for_member_id = NULL WHERE prescribed_for_member_id = :id")
+    suspend fun clearPrescribedFor(id: Long)
+
+    /** Removes the member and every reference to them; medicines themselves are kept. */
+    @Transaction
+    suspend fun delete(id: Long) {
+        clearPrescribedFor(id)
+        deleteRow(id)
+    }
 }
 
 @Dao

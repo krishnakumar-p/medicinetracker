@@ -61,6 +61,8 @@
     <string name="core_ui_event_quantity_used">Used</string>
     <string name="core_ui_event_status_changed">Status changed</string>
     <string name="core_ui_event_auto_expired">Expired automatically</string>
+    <string name="core_ui_event_dose_taken">Dose taken</string>
+    <string name="core_ui_event_dose_undone">Dose un-ticked</string>
 
     <!-- Filters -->
     <string name="core_ui_window_any">Any expiry</string>

@@ -64,6 +64,8 @@ fun MedicineEventType.label(): String = stringResource(
         MedicineEventType.QUANTITY_USED -> R.string.core_ui_event_quantity_used
         MedicineEventType.STATUS_CHANGED -> R.string.core_ui_event_status_changed
         MedicineEventType.AUTO_EXPIRED -> R.string.core_ui_event_auto_expired
+        MedicineEventType.DOSE_TAKEN -> R.string.core_ui_event_dose_taken
+        MedicineEventType.DOSE_UNDONE -> R.string.core_ui_event_dose_undone
     },
 )
 

@@ -143,7 +143,8 @@ private fun csvLabels(): CsvLabels {
         R.string.feature_settings_csv_col_name, R.string.feature_settings_csv_col_generic, R.string.feature_settings_csv_col_strength,
         R.string.feature_settings_csv_col_form, R.string.feature_settings_csv_col_quantity, R.string.feature_settings_csv_col_unit,
         R.string.feature_settings_csv_col_expiry, R.string.feature_settings_csv_col_status, R.string.feature_settings_csv_col_people,
-        R.string.feature_settings_csv_col_dosage, R.string.feature_settings_csv_col_doctor, R.string.feature_settings_csv_col_rx,
+        R.string.feature_settings_csv_col_dosage, R.string.feature_settings_csv_col_doctor, R.string.feature_settings_csv_col_prescribed_for,
+        R.string.feature_settings_csv_col_rx_start, R.string.feature_settings_csv_col_rx_end, R.string.feature_settings_csv_col_rx,
         R.string.feature_settings_csv_col_location, R.string.feature_settings_csv_col_batch, R.string.feature_settings_csv_col_notes,
     ).map { stringResource(it) }
     check(headers.size == CsvExporter.COLUMN_COUNT)

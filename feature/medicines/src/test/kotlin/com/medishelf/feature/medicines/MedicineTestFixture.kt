@@ -11,6 +11,7 @@ import com.medishelf.core.domain.validation.MedicineValidator
 import com.medishelf.core.testing.FakeConditionSuggestionRepository
 import com.medishelf.core.testing.FakeFamilyMemberRepository
 import com.medishelf.core.testing.FakeMedicineRepository
+import com.medishelf.core.testing.FakeDoseRepository
 import com.medishelf.core.testing.FakePhotoStore
 import com.medishelf.core.testing.FakeStorageLocationRepository
 import com.medishelf.core.testing.TestTimeProvider
@@ -31,6 +32,7 @@ class MedicineTestFixture {
     val medicines = FakeMedicineRepository(members, locations)
     val suggestions = FakeConditionSuggestionRepository()
     val photos = FakePhotoStore()
+    val doses = FakeDoseRepository(medicines)
 
     fun listViewModel(route: MedicineListRoute = MedicineListRoute()) = MedicineListViewModel(
         savedStateHandle = SavedStateHandle(route = route),
@@ -46,11 +48,12 @@ class MedicineTestFixture {
     ) = MedicineEditViewModel(
         savedStateHandle = savedStateHandle,
         medicines = medicines,
+        doses = doses,
         members = members,
         locations = locations,
         suggestions = suggestions,
         findPrefill = FindPrefillByBarcodeUseCase(medicines),
-        saveMedicine = SaveMedicineUseCase(medicines, suggestions, MedicineValidator(), time),
+        saveMedicine = SaveMedicineUseCase(medicines, suggestions, MedicineValidator(), time, doses),
         validator = MedicineValidator(),
         time = time,
     )
@@ -58,6 +61,7 @@ class MedicineTestFixture {
     fun detailViewModel(id: Long) = MedicineDetailViewModel(
         savedStateHandle = SavedStateHandle(route = MedicineDetailRoute(id)),
         medicines = medicines,
+        doses = doses,
         photoStore = photos,
         reduceQuantity = ReduceQuantityUseCase(medicines, time),
         updateStatus = UpdateMedicineStatusUseCase(medicines, time),

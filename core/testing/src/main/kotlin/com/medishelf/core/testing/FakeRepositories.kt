@@ -2,9 +2,13 @@ package com.medishelf.core.testing
 
 import com.medishelf.core.domain.repository.AssignmentInput
 import com.medishelf.core.domain.repository.ConditionSuggestionRepository
+import com.medishelf.core.domain.repository.DoseRepository
 import com.medishelf.core.domain.repository.FamilyMemberRepository
 import com.medishelf.core.domain.repository.MedicineRepository
 import com.medishelf.core.domain.repository.StorageLocationRepository
+import com.medishelf.core.model.DoseLog
+import com.medishelf.core.model.DoseSchedule
+import com.medishelf.core.model.DoseScheduleKind
 import com.medishelf.core.model.FamilyMember
 import com.medishelf.core.model.Medicine
 import com.medishelf.core.model.MedicineAssignment
@@ -84,6 +88,7 @@ class FakeMedicineRepository(
                     },
                     location = medicine.storageLocationId?.let(places::get),
                     photos = photos.filter { it.medicineId == medicine.id },
+                    prescribedFor = medicine.prescribedForMemberId?.let(people::get),
                 )
             }
         }
@@ -109,6 +114,7 @@ class FakeMedicineRepository(
                 members.members.value[link.memberId]?.let { MedicineAssignment(it, link.condition) }
             },
             location = medicine.storageLocationId?.let(locations.locations.value::get),
+            prescribedFor = medicine.prescribedForMemberId?.let(members.members.value::get),
         )
     }
 
@@ -245,4 +251,50 @@ class FakeDocumentStorage : com.medishelf.core.domain.backup.DocumentStorage {
     }
     override suspend fun <T> read(uri: String, block: suspend (java.io.InputStream) -> T): T =
         block(java.io.ByteArrayInputStream(files.getValue(uri)))
+}
+
+/** In-memory schedules and dose log; stock changes go through [medicines] like the Room DAO. */
+class FakeDoseRepository(
+    private val medicines: FakeMedicineRepository = FakeMedicineRepository(),
+) : DoseRepository {
+    val schedules = MutableStateFlow<Map<Long, DoseSchedule>>(emptyMap())
+    val logs = MutableStateFlow<List<DoseLog>>(emptyList())
+    private var nextId = 1L
+    private var nextLogId = 1L
+
+    override fun observeSchedules(): Flow<List<DoseSchedule>> = schedules.map { it.values.sortedBy(DoseSchedule::id) }
+
+    override fun observeLogs(from: LocalDate, to: LocalDate): Flow<List<DoseLog>> =
+        logs.map { all -> all.filter { !it.date.isBefore(from) && !it.date.isAfter(to) } }
+
+    override suspend fun getSchedule(id: Long): DoseSchedule? = schedules.value[id]
+
+    override suspend fun findSchedule(medicineId: Long, kind: DoseScheduleKind): DoseSchedule? =
+        schedules.value.values.firstOrNull { it.medicineId == medicineId && it.kind == kind }
+
+    override suspend fun saveSchedule(schedule: DoseSchedule): Long {
+        val id = if (schedule.id == 0L) nextId++ else schedule.id
+        schedules.update { it + (id to schedule.copy(id = id)) }
+        return id
+    }
+
+    override suspend fun deleteSchedule(id: Long) {
+        schedules.update { it - id }
+        logs.update { all -> all.filterNot { it.scheduleId == id } }
+    }
+
+    override suspend fun findLog(scheduleId: Long, date: LocalDate, slot: Int): DoseLog? =
+        logs.value.firstOrNull { it.scheduleId == scheduleId && it.date == date && it.slot == slot }
+
+    override suspend fun takeDose(log: DoseLog, medicineId: Long, quantity: Double, status: MedicineStatus, event: MedicineEvent): Boolean {
+        if (findLog(log.scheduleId, log.date, log.slot) != null) return false
+        logs.update { it + log.copy(id = nextLogId++) }
+        medicines.updateQuantityAndStatus(medicineId, quantity, status, event)
+        return true
+    }
+
+    override suspend fun undoDose(log: DoseLog, medicineId: Long, quantity: Double, status: MedicineStatus, event: MedicineEvent) {
+        logs.update { all -> all.filterNot { it.id == log.id } }
+        medicines.updateQuantityAndStatus(medicineId, quantity, status, event)
+    }
 }

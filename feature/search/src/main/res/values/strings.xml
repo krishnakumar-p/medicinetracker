@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feature_search_title">Search</string>
+    <string name="feature_search_hint">Medicine, ingredient, doctor, person…</string>
+    <string name="feature_search_clear">Clear search</string>
+    <string name="feature_search_intro">Search everything you have recorded: medicine names, composition, strength, doctor, who and what a prescription is for, conditions, people, allergies, storage places, batch, barcode and notes. Finished and disposed medicines are included at the end.</string>
+    <string name="feature_search_nothing">Nothing matches “%1$s”</string>
+    <string name="feature_search_section_medicines">Medicines</string>
+    <string name="feature_search_section_people">People</string>
+    <string name="feature_search_section_places">Places</string>
+    <string name="feature_search_scope_all">All</string>
+    <string name="feature_search_scope_count">%1$s (%2$d)</string>
+    <string name="feature_search_on_schedule">On a dose schedule</string>
+    <string name="feature_search_match">%1$s: %2$s</string>
+    <plurals name="feature_search_medicine_count">
+        <item quantity="one">%d medicine in the cabinet</item>
+        <item quantity="other">%d medicines in the cabinet</item>
+    </plurals>
+    <string name="feature_search_field_name">Name</string>
+    <string name="feature_search_field_composition">Composition</string>
+    <string name="feature_search_field_strength">Strength</string>
+    <string name="feature_search_field_condition">Condition</string>
+    <string name="feature_search_field_prescribed_for">Prescribed for</string>
+    <string name="feature_search_field_person">Person</string>
+    <string name="feature_search_field_doctor">Doctor</string>
+    <string name="feature_search_field_manufacturer">Manufacturer</string>
+    <string name="feature_search_field_location">Kept in</string>
+    <string name="feature_search_field_dosage">Dosage</string>
+    <string name="feature_search_field_batch">Batch</string>
+    <string name="feature_search_field_barcode">Barcode</string>
+    <string name="feature_search_field_notes">Notes</string>
+    <string name="feature_search_field_relationship">Relationship</string>
+    <string name="feature_search_field_allergies">Allergies</string>
+    <string name="feature_search_field_room">Room</string>
+</resources>

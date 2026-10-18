@@ -6,6 +6,8 @@ import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
 import com.medishelf.core.database.MediShelfDatabase
 import com.medishelf.core.database.entity.ConditionSuggestionEntity
+import com.medishelf.core.database.entity.DoseLogEntity
+import com.medishelf.core.database.entity.DoseScheduleEntity
 import com.medishelf.core.database.entity.FamilyMemberEntity
 import com.medishelf.core.database.entity.MedicineEntity
 import com.medishelf.core.database.entity.MedicineMemberCrossRef
@@ -14,6 +16,7 @@ import com.medishelf.core.database.entity.StorageLocationEntity
 import com.medishelf.core.domain.backup.ImportResult
 import com.medishelf.core.domain.reminders.ReminderLedger
 import com.medishelf.core.domain.repository.PhotoStore
+import com.medishelf.core.model.DoseScheduleKind
 import com.medishelf.core.model.MedicineForm
 import com.medishelf.core.model.MedicineStatus
 import com.medishelf.core.model.PhotoType
@@ -67,11 +70,17 @@ class ZipBackupServiceTest {
             useWithinDaysAfterOpening = null, prescribedBy = "Dr. Hana", prescriptionDate = null, dosageInstructions = "2 puffs",
             storageLocationId = 3, isPrescription = true, notes = "Naïve café ✓ 2×/day", status = MedicineStatus.ACTIVE,
             createdAt = Instant.ofEpochMilli(1), updatedAt = Instant.ofEpochMilli(2),
+            prescribedForMemberId = 7, prescribedForReason = "Asthma",
+            prescriptionStartDate = LocalDate.of(2026, 1, 1), prescriptionEndDate = LocalDate.of(2026, 6, 30),
         )
         db.medicineDao().insert(medicine)
         db.medicineDao().insertAssignments(listOf(MedicineMemberCrossRef(11, 7, "Asthma")))
         db.medicineDao().insertPhoto(MedicinePhotoEntity(5, 11, PhotoType.BOX, "box.jpg", Instant.ofEpochMilli(3)))
         db.conditionSuggestionDao().upsert(listOf(ConditionSuggestionEntity("Asthma", Instant.ofEpochMilli(4))))
+        db.doseDao().insertSchedule(
+            DoseScheduleEntity(21, 11, 7, DoseScheduleKind.PRESCRIPTION, 2.0, 2, LocalDate.of(2026, 1, 1), LocalDate.of(2026, 6, 30), Instant.ofEpochMilli(5)),
+        )
+        db.doseDao().insertLog(DoseLogEntity(31, 21, LocalDate.of(2026, 1, 2), 1, 2.0, Instant.ofEpochMilli(6)))
         File(photoDir, "box.jpg").writeBytes(byteArrayOf(1, 2, 3))
     }
 
@@ -87,7 +96,12 @@ class ZipBackupServiceTest {
         assertThat(String(archive, Charsets.ISO_8859_1)).doesNotContain("Ventolin") // encrypted, not just zipped
 
         // Wipe and change things, then restore.
-        db.backupDao().replaceAll(db.backupDao().snapshot().copy(members = emptyList(), assignments = emptyList(), medicines = emptyList(), photos = emptyList(), events = emptyList()))
+        db.backupDao().replaceAll(
+            db.backupDao().snapshot().copy(
+                members = emptyList(), assignments = emptyList(), medicines = emptyList(), photos = emptyList(), events = emptyList(),
+                schedules = emptyList(), doseLogs = emptyList(),
+            ),
+        )
         File(photoDir, "box.jpg").delete()
         File(photoDir, "stray.jpg").writeBytes(byteArrayOf(9))
 
@@ -101,6 +115,10 @@ class ZipBackupServiceTest {
         assertThat(restored.medicine.notes).isEqualTo("Naïve café ✓ 2×/day")
         assertThat(restored.assignments.single().crossRef.condition).isEqualTo("Asthma")
         assertThat(restored.location!!.requiresRefrigeration).isTrue()
+        assertThat(restored.prescribedFor!!.name).isEqualTo("Sara")
+        assertThat(restored.medicine.prescriptionEndDate).isEqualTo(LocalDate.of(2026, 6, 30))
+        assertThat(db.doseDao().getSchedule(21)!!.timesPerDay).isEqualTo(2)
+        assertThat(db.doseDao().findLog(21, LocalDate.of(2026, 1, 2), 1)!!.quantity).isEqualTo(2.0)
         assertThat(File(photoDir, "box.jpg").readBytes()).isEqualTo(byteArrayOf(1, 2, 3))
         assertThat(File(photoDir, "stray.jpg").exists()).isFalse()
         assertThat(ledger.ledger).isEqualTo(ReminderLedger())

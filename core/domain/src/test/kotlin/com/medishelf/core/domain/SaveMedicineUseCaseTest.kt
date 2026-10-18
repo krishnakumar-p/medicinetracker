@@ -12,6 +12,7 @@ import com.medishelf.core.model.MedicineStatus
 import com.medishelf.core.testing.FakeConditionSuggestionRepository
 import com.medishelf.core.testing.FakeFamilyMemberRepository
 import com.medishelf.core.testing.FakeMedicineRepository
+import com.medishelf.core.testing.FakeDoseRepository
 import com.medishelf.core.testing.TestTimeProvider
 import com.medishelf.core.testing.testMember
 import kotlinx.coroutines.test.runTest
@@ -22,7 +23,8 @@ class SaveMedicineUseCaseTest {
     private val members = FakeFamilyMemberRepository()
     private val medicines = FakeMedicineRepository(members)
     private val suggestions = FakeConditionSuggestionRepository()
-    private val save = SaveMedicineUseCase(medicines, suggestions, MedicineValidator(), time)
+    private val doses = FakeDoseRepository(medicines)
+    private val save = SaveMedicineUseCase(medicines, suggestions, MedicineValidator(), time, doses)
 
     private val draft = MedicineDraft(
         brandName = "  Ventolin ",

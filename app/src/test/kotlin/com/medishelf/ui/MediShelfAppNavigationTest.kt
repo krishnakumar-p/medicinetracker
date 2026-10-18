@@ -60,6 +60,23 @@ class MediShelfAppNavigationTest {
 
         composeRule.onNodeWithTag("nav_FAMILY").performClick()
         composeRule.onNodeWithText("No family members yet").assertExists()
+
+        composeRule.onNodeWithTag("nav_DOSES").performClick()
+        composeRule.onNodeWithText("No regular medication yet").assertExists()
+    }
+
+    @Test
+    fun home_opensSearchAndSettings_withUpNavigation() {
+        launch()
+        composeRule.onNodeWithTag("open_search").performClick()
+        composeRule.onNodeWithTag("search_field").assertExists()
+        composeRule.onNodeWithTag("nav_HOME").assertDoesNotExist()
+        composeRule.onNodeWithContentDescription("Navigate up").performClick()
+
+        composeRule.onNodeWithTag("open_settings").performClick()
+        composeRule.onNodeWithText("App lock").assertExists()
+        composeRule.onNodeWithContentDescription("Navigate up").performClick()
+        composeRule.onNodeWithTag("nav_HOME").assertIsSelected()
     }
 
     @Test

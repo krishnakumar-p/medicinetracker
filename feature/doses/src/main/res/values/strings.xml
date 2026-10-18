@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="feature_doses_title">Doses</string>
+    <string name="feature_doses_add_continuous">Add continuous medication</string>
+    <string name="feature_doses_edit_title">Edit medication</string>
+    <string name="feature_doses_empty_title">No regular medication yet</string>
+    <string name="feature_doses_empty_body">Add a medicine taken every day, or give a prescription a dose and end date in the medicine editor. Each dose then appears here to tick off, and stock goes down only for the doses you tick.</string>
+    <string name="feature_doses_today_progress">Today: %1$d of %2$d taken</string>
+    <string name="feature_doses_today_none">No doses due today</string>
+    <string name="feature_doses_section_continuous">Continuous medication</string>
+    <string name="feature_doses_section_courses">Prescription courses</string>
+    <string name="feature_doses_slot">dose %1$d of %2$d</string>
+    <string name="feature_doses_amount">%1$s %2$s</string>
+    <plurals name="feature_doses_times_per_day">
+        <item quantity="one">once a day</item>
+        <item quantity="other">%d times a day</item>
+    </plurals>
+    <plurals name="feature_doses_days_left">
+        <item quantity="one">Stock for %d more day</item>
+        <item quantity="other">Stock for %d more days</item>
+    </plurals>
+    <string name="feature_doses_until">Until %1$s</string>
+    <string name="feature_doses_starts">Starts %1$s</string>
+    <string name="feature_doses_ended">Ended %1$s</string>
+    <string name="feature_doses_ongoing_since">Ongoing since %1$s</string>
+    <string name="feature_doses_not_enough_stock">Not enough left for a dose. Restock in the medicine editor.</string>
+    <string name="feature_doses_expired_warning">This pack has expired</string>
+    <string name="feature_doses_edit">Edit</string>
+    <string name="feature_doses_stop">Stop</string>
+    <string name="feature_doses_stop_title">Stop this medication?</string>
+    <string name="feature_doses_stop_body">It ends today and no more doses are listed. Doses already taken stay in the history.</string>
+    <string name="feature_doses_out_of_stock_message">Not enough stock for this dose</string>
+    <string name="feature_doses_finished_message">That was the last dose in the pack. It is now marked finished.</string>
+    <string name="feature_doses_stopped_message">Medication stopped</string>
+    <string name="feature_doses_continuous_intro">Each dose is listed under Doses every day from the start date. Stock goes down only when you tick a dose as taken.</string>
+    <string name="feature_doses_field_medicine">Medicine</string>
+    <string name="feature_doses_choose_medicine">Choose a medicine</string>
+    <string name="feature_doses_in_stock">In stock: %1$s</string>
+    <string name="feature_doses_field_person">Taken by</string>
+    <string name="feature_doses_person_none">Not set</string>
+    <string name="feature_doses_field_dose">Dose %1$s</string>
+    <string name="feature_doses_field_times">Times per day</string>
+    <string name="feature_doses_field_start">Start date</string>
+    <string name="feature_doses_field_end">End date</string>
+    <string name="feature_doses_end_help">Leave empty to keep it going</string>
+    <string name="feature_doses_no_medicines_title">No medicines in the cabinet</string>
+    <string name="feature_doses_no_medicines_body">Add the medicine first, then come back to record how often it is taken.</string>
+    <string name="feature_doses_error_medicine">Choose a medicine</string>
+    <string name="feature_doses_error_dose">Enter a dose above 0</string>
+    <string name="feature_doses_error_times">Enter 1 to 12 times a day</string>
+    <string name="feature_doses_error_end">End date must be on or after the start date</string>
+</resources>

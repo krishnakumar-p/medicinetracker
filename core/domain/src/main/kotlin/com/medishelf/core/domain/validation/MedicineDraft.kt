@@ -23,6 +23,13 @@ data class MedicineDraft(
     val useWithinDaysAfterOpening: Int? = null,
     val prescribedBy: String = "",
     val prescriptionDate: LocalDate? = null,
+    val prescribedForMemberId: Long? = null,
+    val prescribedForReason: String = "",
+    val prescriptionStartDate: LocalDate? = null,
+    val prescriptionEndDate: LocalDate? = null,
+    /** Dose of the prescription course; with [dosesPerDay], makes doses due until the end date. */
+    val doseAmount: Double? = null,
+    val dosesPerDay: Int? = null,
     val dosageInstructions: String = "",
     val storageLocationId: Long? = null,
     val isPrescription: Boolean = false,

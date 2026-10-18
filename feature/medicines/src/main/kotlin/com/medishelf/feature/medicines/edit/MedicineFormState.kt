@@ -2,6 +2,7 @@ package com.medishelf.feature.medicines.edit
 
 import com.medishelf.core.domain.validation.DraftAssignment
 import com.medishelf.core.domain.validation.MedicineDraft
+import com.medishelf.core.model.DoseSchedule
 import com.medishelf.core.model.MedicineDetails
 import com.medishelf.core.model.MedicineForm
 import com.medishelf.core.model.QuantityUnit
@@ -30,6 +31,12 @@ data class MedicineFormState(
     val isPrescription: Boolean = false,
     val prescribedBy: String = "",
     val prescriptionDate: LocalDate? = null,
+    val prescribedForMemberId: Long? = null,
+    val prescribedForReason: String = "",
+    val prescriptionStartDate: LocalDate? = null,
+    val prescriptionEndDate: LocalDate? = null,
+    val doseAmountText: String = "",
+    val dosesPerDayText: String = "",
     val dosageInstructions: String = "",
     val storageLocationId: Long? = null,
     val notes: String = "",
@@ -55,6 +62,12 @@ data class MedicineFormState(
         useWithinDaysAfterOpening = useWithinText.takeIf(String::isNotBlank)?.let { parseLocalizedInt(it) ?: 0 },
         prescribedBy = prescribedBy,
         prescriptionDate = prescriptionDate,
+        prescribedForMemberId = prescribedForMemberId,
+        prescribedForReason = prescribedForReason,
+        prescriptionStartDate = prescriptionStartDate,
+        prescriptionEndDate = prescriptionEndDate,
+        doseAmount = doseAmountText.takeIf(String::isNotBlank)?.let { parseLocalizedNumber(it) ?: -1.0 },
+        dosesPerDay = dosesPerDayText.takeIf(String::isNotBlank)?.let { parseLocalizedInt(it) ?: 0 },
         dosageInstructions = dosageInstructions,
         storageLocationId = storageLocationId,
         isPrescription = isPrescription,
@@ -63,7 +76,8 @@ data class MedicineFormState(
     )
 
     companion object {
-        fun from(details: MedicineDetails): MedicineFormState = with(details.medicine) {
+        /** [schedule] is the medicine's prescription-course dose, if any. */
+        fun from(details: MedicineDetails, schedule: DoseSchedule? = null): MedicineFormState = with(details.medicine) {
             MedicineFormState(
                 id = id,
                 brandName = brandName,
@@ -83,6 +97,12 @@ data class MedicineFormState(
                 isPrescription = isPrescription,
                 prescribedBy = prescribedBy,
                 prescriptionDate = prescriptionDate,
+                prescribedForMemberId = prescribedForMemberId,
+                prescribedForReason = prescribedForReason,
+                prescriptionStartDate = prescriptionStartDate,
+                prescriptionEndDate = prescriptionEndDate,
+                doseAmountText = schedule?.dosePerIntake?.toEditableString().orEmpty(),
+                dosesPerDayText = schedule?.timesPerDay?.toString().orEmpty(),
                 dosageInstructions = dosageInstructions,
                 storageLocationId = storageLocationId,
                 notes = notes,

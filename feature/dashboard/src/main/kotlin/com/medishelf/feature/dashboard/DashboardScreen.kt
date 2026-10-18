@@ -19,6 +19,9 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
+import androidx.compose.material3.IconButton
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -51,6 +54,7 @@ import androidx.lifecycle.viewModelScope
 import com.medishelf.core.common.TimeProvider
 import com.medishelf.core.designsystem.theme.MediShelfThemeExt
 import com.medishelf.core.domain.usecase.ObserveDashboardCountsUseCase
+import com.medishelf.core.domain.usecase.ObserveDoseDayUseCase
 import com.medishelf.core.domain.usecase.ObserveMedicinesUseCase
 import com.medishelf.core.model.DashboardCounts
 import com.medishelf.core.model.MedicineDetails
@@ -78,6 +82,8 @@ data class DashboardUiState(
     val hasAnyMedicine: Boolean = false,
     val remindersEnabled: Boolean = false,
     val today: LocalDate = LocalDate.MIN,
+    val dosesDue: Int = 0,
+    val dosesTaken: Int = 0,
 )
 
 @HiltViewModel
@@ -85,13 +91,15 @@ class DashboardViewModel @Inject constructor(
     observeCounts: ObserveDashboardCountsUseCase,
     observeMedicines: ObserveMedicinesUseCase,
     settings: SettingsRepository,
+    observeDoses: ObserveDoseDayUseCase,
     time: TimeProvider,
 ) : ViewModel() {
     val uiState: StateFlow<DashboardUiState> = combine(
         observeCounts(EXPIRING_SOON_DAYS),
         observeMedicines(flowOf(MedicineFilter())),
         settings.settings,
-    ) { counts, inCabinet, s ->
+        observeDoses(),
+    ) { counts, inCabinet, s, doses ->
         val today = time.today()
         DashboardUiState(
             isLoading = false,
@@ -100,6 +108,8 @@ class DashboardViewModel @Inject constructor(
             hasAnyMedicine = inCabinet.isNotEmpty(),
             remindersEnabled = s.reminders.enabled,
             today = today,
+            dosesDue = doses.due.size,
+            dosesTaken = doses.takenCount,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DashboardUiState())
 
@@ -114,10 +124,13 @@ internal fun DashboardScreen(
     onAddMedicine: () -> Unit,
     onMedicineClick: (Long) -> Unit,
     onScanBarcode: () -> Unit = {},
+    onSearch: () -> Unit = {},
+    onOpenSettings: () -> Unit = {},
+    onOpenDoses: () -> Unit = {},
     viewModel: DashboardViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
-    DashboardContent(state, onTileClick, onAddMedicine, onMedicineClick, onScanBarcode)
+    DashboardContent(state, onTileClick, onAddMedicine, onMedicineClick, onScanBarcode, onSearch, onOpenSettings, onOpenDoses)
 }
 
 @Composable
@@ -127,9 +140,26 @@ internal fun DashboardContent(
     onAddMedicine: () -> Unit,
     onMedicineClick: (Long) -> Unit,
     onScanBarcode: () -> Unit = {},
+    onSearch: () -> Unit = {},
+    onOpenSettings: () -> Unit = {},
+    onOpenDoses: () -> Unit = {},
 ) {
     val colors = MediShelfThemeExt.statusColors
-    Scaffold(topBar = { MediShelfTopBar(title = stringResource(R.string.feature_dashboard_title)) }) { padding ->
+    Scaffold(
+        topBar = {
+            MediShelfTopBar(
+                title = stringResource(R.string.feature_dashboard_title),
+                actions = {
+                    IconButton(onClick = onSearch, modifier = Modifier.testTag("open_search")) {
+                        Icon(Icons.Filled.Search, contentDescription = stringResource(R.string.feature_dashboard_search))
+                    }
+                    IconButton(onClick = onOpenSettings, modifier = Modifier.testTag("open_settings")) {
+                        Icon(Icons.Filled.Settings, contentDescription = stringResource(R.string.feature_dashboard_settings))
+                    }
+                },
+            )
+        },
+    ) { padding ->
         if (state.isLoading) {
             LoadingState(Modifier.padding(padding))
             return@Scaffold
@@ -186,6 +216,23 @@ internal fun DashboardContent(
                     onClick = onScanBarcode,
                     modifier = Modifier.padding(top = 8.dp).fillMaxWidth().heightIn(min = 48.dp),
                 ) { Text(stringResource(R.string.feature_dashboard_scan)) }
+                }
+            }
+            if (state.dosesDue > 0) {
+                item {
+                    Card(onClick = onOpenDoses, modifier = Modifier.fillMaxWidth().testTag("doses_summary")) {
+                        Column(Modifier.padding(16.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                            Text(stringResource(R.string.feature_dashboard_doses_title), style = MaterialTheme.typography.titleSmall)
+                            Text(
+                                if (state.dosesTaken == state.dosesDue) {
+                                    stringResource(R.string.feature_dashboard_doses_done)
+                                } else {
+                                    stringResource(R.string.feature_dashboard_doses_progress, state.dosesTaken, state.dosesDue)
+                                },
+                                style = MaterialTheme.typography.bodyLarge,
+                            )
+                        }
+                    }
                 }
             }
             if (!state.hasAnyMedicine) {

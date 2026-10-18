@@ -1,5 +1,6 @@
 package com.medishelf.core.domain.validation
 
+import com.medishelf.core.model.DoseSchedule
 import java.time.LocalDate
 import javax.inject.Inject
 
@@ -16,6 +17,11 @@ enum class MedicineValidationError {
     OPENED_IN_FUTURE,
     USE_WITHIN_NOT_POSITIVE,
     PRESCRIPTION_IN_FUTURE,
+    PRESCRIPTION_END_BEFORE_START,
+    DOSE_NOT_POSITIVE,
+    DOSES_PER_DAY_INVALID,
+    /** Only one of dose amount and doses per day was given. */
+    DOSE_INCOMPLETE,
 }
 
 class MedicineValidator @Inject constructor() {
@@ -48,9 +54,23 @@ class MedicineValidator @Inject constructor() {
         if (opened != null && opened.isAfter(today)) add(MedicineValidationError.OPENED_IN_FUTURE)
         draft.useWithinDaysAfterOpening?.let { if (it <= 0) add(MedicineValidationError.USE_WITHIN_NOT_POSITIVE) }
         draft.prescriptionDate?.let { if (it.isAfter(today)) add(MedicineValidationError.PRESCRIPTION_IN_FUTURE) }
+        val start = draft.prescriptionStartDate
+        val end = draft.prescriptionEndDate
+        if (start != null && end != null && end.isBefore(start)) add(MedicineValidationError.PRESCRIPTION_END_BEFORE_START)
+        addAll(validateDose(draft.doseAmount, draft.dosesPerDay))
     }
 
     companion object {
         const val MAX_NAME_LENGTH = 120
+        const val MAX_DOSE = 1000.0
+
+        /** Dose amount and times per day: both empty (no dose tracking) or both valid. */
+        fun validateDose(amount: Double?, timesPerDay: Int?): Set<MedicineValidationError> = buildSet {
+            if ((amount == null) != (timesPerDay == null)) add(MedicineValidationError.DOSE_INCOMPLETE)
+            amount?.let { if (it.isNaN() || it <= 0 || it > MAX_DOSE) add(MedicineValidationError.DOSE_NOT_POSITIVE) }
+            timesPerDay?.let {
+                if (it !in 1..DoseSchedule.MAX_TIMES_PER_DAY) add(MedicineValidationError.DOSES_PER_DAY_INVALID)
+            }
+        }
     }
 }

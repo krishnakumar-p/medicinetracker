@@ -22,7 +22,12 @@ import com.medishelf.feature.medicines.navigation.medicinesScreens
 import com.medishelf.feature.medicines.navigation.navigateToMedicineDetail
 import com.medishelf.feature.medicines.navigation.navigateToMedicineEdit
 import com.medishelf.feature.medicines.navigation.navigateToMedicineList
+import com.medishelf.feature.settings.navigation.navigateToSettings
 import com.medishelf.feature.settings.navigation.settingsScreen
+import com.medishelf.feature.doses.navigation.dosesScreens
+import com.medishelf.feature.doses.navigation.navigateToScheduleEdit
+import com.medishelf.feature.search.navigation.navigateToSearch
+import com.medishelf.feature.search.navigation.searchScreen
 import com.medishelf.feature.lock.navigation.lockScreens
 import com.medishelf.feature.lock.navigation.navigateToAppLockSettings
 import com.medishelf.feature.lock.navigation.navigateToPinFlow
@@ -51,6 +56,22 @@ fun MediShelfNavHost(
             onAddMedicine = { navController.navigateToMedicineEdit() },
             onScanBarcode = { navController.navigateToScan(ScanMode.PACK) },
             onMedicineClick = navController::navigateToMedicineDetail,
+            onSearch = navController::navigateToSearch,
+            onOpenSettings = { navController.navigateToSettings() },
+            onOpenDoses = { navController.navigateToTopLevel(TopLevelDestination.DOSES) },
+        )
+        searchScreen(
+            onNavigateUp = navigateUp,
+            onMedicineClick = navController::navigateToMedicineDetail,
+            onMemberClick = navController::navigateToFamilyMember,
+            onLocationClick = navController::navigateToLocationEdit,
+        )
+        dosesScreens(
+            onNavigateUp = navigateUp,
+            onMedicineClick = navController::navigateToMedicineDetail,
+            onEditMedicine = { id -> navController.navigateToMedicineEdit(id) },
+            onAddSchedule = { navController.navigateToScheduleEdit() },
+            onEditSchedule = { id -> navController.navigateToScheduleEdit(id = id) },
         )
         medicinesScreens(
             onNavigateUp = navigateUp,
@@ -69,6 +90,7 @@ fun MediShelfNavHost(
             },
             onScanBarcode = { navController.navigateToScan(ScanMode.BARCODE) },
             onScanPack = { navController.navigateToScan(ScanMode.PACK) },
+            onTakeRegularly = { id -> navController.navigateToScheduleEdit(medicineId = id) },
         )
         scanScreen(
             onNavigateUp = navigateUp,
@@ -101,6 +123,7 @@ fun MediShelfNavHost(
             onOpenAppLock = navController::navigateToAppLockSettings,
             showDeveloperOptions = BuildConfig.DEBUG,
             versionName = BuildConfig.VERSION_NAME,
+            onNavigateUp = navigateUp,
         )
         lockScreens(onNavigateUp = navigateUp, onPinFlow = navController::navigateToPinFlow)
     }

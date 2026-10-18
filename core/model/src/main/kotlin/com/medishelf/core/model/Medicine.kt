@@ -25,6 +25,13 @@ data class Medicine(
     val useWithinDaysAfterOpening: Int? = null,
     val prescribedBy: String = "",
     val prescriptionDate: LocalDate? = null,
+    /** Family member the prescription was written for. */
+    val prescribedForMemberId: Long? = null,
+    /** Reason or condition the prescription is for. */
+    val prescribedForReason: String = "",
+    val prescriptionStartDate: LocalDate? = null,
+    /** Last day of the course; doses stop being due after it. */
+    val prescriptionEndDate: LocalDate? = null,
     val dosageInstructions: String = "",
     val storageLocationId: Long? = null,
     val isPrescription: Boolean = false,

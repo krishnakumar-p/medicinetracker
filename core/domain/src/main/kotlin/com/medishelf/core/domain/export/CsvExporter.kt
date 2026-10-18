@@ -25,7 +25,7 @@ data class CsvLabels(
  * accented names and symbols correctly, and spreadsheet-formula neutralising (CWE-1236) since names are user input.
  */
 object CsvExporter {
-    const val COLUMN_COUNT = 15
+    const val COLUMN_COUNT = 18
 
     fun export(items: List<MedicineDetails>, today: LocalDate, labels: CsvLabels, memberId: Long? = null): String =
         buildString {
@@ -49,6 +49,9 @@ object CsvExporter {
                         people,
                         m.dosageInstructions,
                         m.prescribedBy,
+                        listOfNotNull(details.prescribedFor?.name, m.prescribedForReason.takeIf(String::isNotBlank)).joinToString(": "),
+                        m.prescriptionStartDate?.toString().orEmpty(),
+                        m.prescriptionEndDate?.toString().orEmpty(),
                         if (m.isPrescription) labels.yes else labels.no,
                         details.location?.name.orEmpty(),
                         m.batchNumber,

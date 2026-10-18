@@ -21,4 +21,6 @@ data class MedicineWithRelations(
     val location: StorageLocationEntity?,
     @Relation(parentColumn = "id", entityColumn = "medicine_id")
     val photos: List<MedicinePhotoEntity>,
+    @Relation(parentColumn = "prescribed_for_member_id", entityColumn = "id")
+    val prescribedFor: FamilyMemberEntity?,
 )

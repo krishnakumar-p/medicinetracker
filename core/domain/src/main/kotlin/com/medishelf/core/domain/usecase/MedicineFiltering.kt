@@ -39,6 +39,10 @@ private fun MedicineDetails.matchesWindow(window: ExpiryWindow, today: LocalDate
 private fun MedicineDetails.searchText(): String = buildString {
     append(medicine.brandName).append(' ')
     append(medicine.genericName).append(' ')
+    append(medicine.manufacturer).append(' ')
+    append(medicine.prescribedBy).append(' ')
+    append(medicine.prescribedForReason).append(' ')
+    prescribedFor?.let { append(it.name).append(' ') }
     assignments.forEach { append(it.member.name).append(' ').append(it.condition.orEmpty()).append(' ') }
 }.normalized()
 

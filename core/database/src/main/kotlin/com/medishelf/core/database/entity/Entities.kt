@@ -5,6 +5,7 @@ import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
 import androidx.room.PrimaryKey
+import com.medishelf.core.model.DoseScheduleKind
 import com.medishelf.core.model.MedicineEventType
 import com.medishelf.core.model.MedicineForm
 import com.medishelf.core.model.MedicineStatus
@@ -68,6 +69,11 @@ data class MedicineEntity(
     @ColumnInfo(name = "use_within_days_after_opening") val useWithinDaysAfterOpening: Int?,
     @ColumnInfo(name = "prescribed_by") val prescribedBy: String,
     @ColumnInfo(name = "prescription_date") val prescriptionDate: LocalDate?,
+    // No foreign key: adding one would rebuild this table in the migration. Cleared on member delete.
+    @ColumnInfo(name = "prescribed_for_member_id") val prescribedForMemberId: Long? = null,
+    @ColumnInfo(name = "prescribed_for_reason", defaultValue = "") val prescribedForReason: String = "",
+    @ColumnInfo(name = "prescription_start_date") val prescriptionStartDate: LocalDate? = null,
+    @ColumnInfo(name = "prescription_end_date") val prescriptionEndDate: LocalDate? = null,
     @ColumnInfo(name = "dosage_instructions") val dosageInstructions: String,
     @ColumnInfo(name = "storage_location_id") val storageLocationId: Long?,
     @ColumnInfo(name = "is_prescription") val isPrescription: Boolean,
@@ -144,6 +150,58 @@ data class MedicineEventEntity(
     @ColumnInfo(name = "to_status") val toStatus: MedicineStatus?,
     val note: String?,
     val at: Instant,
+)
+
+@Entity(
+    tableName = "dose_schedules",
+    foreignKeys = [
+        ForeignKey(
+            entity = MedicineEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["medicine_id"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+        ForeignKey(
+            entity = FamilyMemberEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["member_id"],
+            onDelete = ForeignKey.SET_NULL,
+        ),
+    ],
+    indices = [Index("medicine_id"), Index("member_id")],
+)
+data class DoseScheduleEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    @ColumnInfo(name = "medicine_id") val medicineId: Long,
+    @ColumnInfo(name = "member_id") val memberId: Long?,
+    val kind: DoseScheduleKind,
+    @ColumnInfo(name = "dose_per_intake") val dosePerIntake: Double,
+    @ColumnInfo(name = "times_per_day") val timesPerDay: Int,
+    @ColumnInfo(name = "start_date") val startDate: LocalDate,
+    @ColumnInfo(name = "end_date") val endDate: LocalDate?,
+    @ColumnInfo(name = "created_at") val createdAt: Instant,
+)
+
+/** A confirmed dose. Unique per schedule, day and slot, so a dose can't be taken twice. */
+@Entity(
+    tableName = "dose_logs",
+    foreignKeys = [
+        ForeignKey(
+            entity = DoseScheduleEntity::class,
+            parentColumns = ["id"],
+            childColumns = ["schedule_id"],
+            onDelete = ForeignKey.CASCADE,
+        ),
+    ],
+    indices = [Index(value = ["schedule_id", "date", "slot"], unique = true), Index("date")],
+)
+data class DoseLogEntity(
+    @PrimaryKey(autoGenerate = true) val id: Long = 0,
+    @ColumnInfo(name = "schedule_id") val scheduleId: Long,
+    val date: LocalDate,
+    val slot: Int,
+    val quantity: Double,
+    @ColumnInfo(name = "taken_at") val takenAt: Instant,
 )
 
 @Entity(tableName = "condition_suggestions")

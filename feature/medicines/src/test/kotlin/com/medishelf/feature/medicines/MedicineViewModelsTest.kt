@@ -223,11 +223,52 @@ class MedicineViewModelsTest {
             assertThat(prescribedBy).isEqualTo("Dr. Hana Saleh")
             assertThat(prescriptionDate).isEqualTo(dispensed)
             assertThat(purchaseDate).isEqualTo(dispensed)
+            assertThat(prescribedForMemberId).isEqualTo(sara)
+            assertThat(prescribedForReason).isEqualTo("Ear infection")
         }
         assertThat(state.scannedFields).containsAtLeast(
-            ScannedField.PEOPLE, ScannedField.LOCATION, ScannedField.USE_WITHIN,
+            ScannedField.PRESCRIBED_FOR, ScannedField.PEOPLE, ScannedField.LOCATION, ScannedField.USE_WITHIN,
             ScannedField.PRESCRIBER, ScannedField.PRESCRIPTION_DATE, ScannedField.PURCHASE_DATE,
         )
+    }
+
+    @Test
+    fun edit_prescriptionCourse_savesPrescribedForAndDose_andReloadsIt() = runTest(mainDispatcherRule.testDispatcher) {
+        val sara = f.members.save(testMember(name = "Sara"))
+        val vm = f.editViewModel()
+        backgroundScope.launch { vm.uiState.collect {} }
+        val today = f.time.today
+        vm.onFormChange {
+            it.copy(
+                brandName = "Augmentin", quantityText = "20", expiryDate = today.plusYears(1), isPrescription = true,
+                prescribedForMemberId = sara, prescribedForReason = "Ear infection",
+                prescriptionStartDate = today, prescriptionEndDate = today.minusDays(1),
+                doseAmountText = "1", dosesPerDayText = "",
+            )
+        }
+        vm.onSave()
+        assertThat(vm.uiState.value.errors).containsExactly(
+            MedicineValidationError.PRESCRIPTION_END_BEFORE_START,
+            MedicineValidationError.DOSE_INCOMPLETE,
+        )
+
+        vm.onFormChange { it.copy(prescriptionEndDate = today.plusDays(6), dosesPerDayText = "2") }
+        vm.onSave()
+        val id = vm.uiState.first { it.savedId != null }.savedId!!
+        val saved = f.medicines.get(id)!!
+        assertThat(saved.prescribedFor!!.name).isEqualTo("Sara")
+        assertThat(saved.medicine.prescriptionEndDate).isEqualTo(today.plusDays(6))
+        assertThat(saved.assignments.single().condition).isEqualTo("Ear infection")
+        val schedule = f.doses.schedules.value.values.single()
+        assertThat(schedule.timesPerDay).isEqualTo(2)
+        assertThat(schedule.endDate).isEqualTo(today.plusDays(6))
+
+        val reopened = f.editViewModel(MedicineEditRoute(id))
+        backgroundScope.launch { reopened.uiState.collect {} }
+        val form = reopened.uiState.first { !it.isLoading }.form
+        assertThat(form.doseAmountText).isEqualTo("1")
+        assertThat(form.dosesPerDayText).isEqualTo("2")
+        assertThat(form.prescribedForReason).isEqualTo("Ear infection")
     }
 
     @Test

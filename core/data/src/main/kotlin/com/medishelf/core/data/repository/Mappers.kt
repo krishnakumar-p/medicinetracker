@@ -1,11 +1,15 @@
 package com.medishelf.core.data.repository
 
+import com.medishelf.core.database.entity.DoseLogEntity
+import com.medishelf.core.database.entity.DoseScheduleEntity
 import com.medishelf.core.database.entity.FamilyMemberEntity
 import com.medishelf.core.database.entity.MedicineEntity
 import com.medishelf.core.database.entity.MedicineEventEntity
 import com.medishelf.core.database.entity.MedicinePhotoEntity
 import com.medishelf.core.database.entity.MedicineWithRelations
 import com.medishelf.core.database.entity.StorageLocationEntity
+import com.medishelf.core.model.DoseLog
+import com.medishelf.core.model.DoseSchedule
 import com.medishelf.core.model.FamilyMember
 import com.medishelf.core.model.Medicine
 import com.medishelf.core.model.MedicineAssignment
@@ -68,6 +72,10 @@ internal fun MedicineEntity.asModel() = Medicine(
     useWithinDaysAfterOpening = useWithinDaysAfterOpening,
     prescribedBy = prescribedBy,
     prescriptionDate = prescriptionDate,
+    prescribedForMemberId = prescribedForMemberId,
+    prescribedForReason = prescribedForReason,
+    prescriptionStartDate = prescriptionStartDate,
+    prescriptionEndDate = prescriptionEndDate,
     dosageInstructions = dosageInstructions,
     storageLocationId = storageLocationId,
     isPrescription = isPrescription,
@@ -95,6 +103,10 @@ internal fun Medicine.asEntity() = MedicineEntity(
     useWithinDaysAfterOpening = useWithinDaysAfterOpening,
     prescribedBy = prescribedBy,
     prescriptionDate = prescriptionDate,
+    prescribedForMemberId = prescribedForMemberId,
+    prescribedForReason = prescribedForReason,
+    prescriptionStartDate = prescriptionStartDate,
+    prescriptionEndDate = prescriptionEndDate,
     dosageInstructions = dosageInstructions,
     storageLocationId = storageLocationId,
     isPrescription = isPrescription,
@@ -139,4 +151,35 @@ internal fun MedicineWithRelations.asModel() = MedicineDetails(
         .sortedBy { it.member.name.lowercase() },
     location = location?.asModel(),
     photos = photos.map { it.asModel() }.sortedBy { it.createdAt },
+    prescribedFor = prescribedFor?.asModel(),
 )
+
+internal fun DoseScheduleEntity.asModel() = DoseSchedule(
+    id = id,
+    medicineId = medicineId,
+    memberId = memberId,
+    kind = kind,
+    dosePerIntake = dosePerIntake,
+    timesPerDay = timesPerDay,
+    startDate = startDate,
+    endDate = endDate,
+    createdAt = createdAt,
+)
+
+internal fun DoseSchedule.asEntity() = DoseScheduleEntity(
+    id = id,
+    medicineId = medicineId,
+    memberId = memberId,
+    kind = kind,
+    dosePerIntake = dosePerIntake,
+    timesPerDay = timesPerDay,
+    startDate = startDate,
+    endDate = endDate,
+    createdAt = createdAt,
+)
+
+internal fun DoseLogEntity.asModel() =
+    DoseLog(id = id, scheduleId = scheduleId, date = date, slot = slot, quantity = quantity, takenAt = takenAt)
+
+internal fun DoseLog.asEntity() =
+    DoseLogEntity(id = id, scheduleId = scheduleId, date = date, slot = slot, quantity = quantity, takenAt = takenAt)

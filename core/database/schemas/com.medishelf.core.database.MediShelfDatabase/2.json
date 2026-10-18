@@ -1,0 +1,754 @@
+{
+  "formatVersion": 1,
+  "database": {
+    "version": 2,
+    "identityHash": "7b9726337f8610d91d5f5493a96174bd",
+    "entities": [
+      {
+        "tableName": "family_members",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `relationship` TEXT NOT NULL, `date_of_birth` INTEGER, `allergies` TEXT, `avatar_color` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "relationship",
+            "columnName": "relationship",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dateOfBirth",
+            "columnName": "date_of_birth",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "allergies",
+            "columnName": "allergies",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "avatarColor",
+            "columnName": "avatar_color",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "storage_locations",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `name` TEXT NOT NULL, `room` TEXT NOT NULL, `notes` TEXT NOT NULL, `photo_file_name` TEXT, `requires_refrigeration` INTEGER NOT NULL)",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "name",
+            "columnName": "name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "room",
+            "columnName": "room",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "photoFileName",
+            "columnName": "photo_file_name",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "requiresRefrigeration",
+            "columnName": "requires_refrigeration",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        }
+      },
+      {
+        "tableName": "medicines",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `brand_name` TEXT NOT NULL, `generic_name` TEXT NOT NULL, `strength` TEXT NOT NULL, `form` TEXT NOT NULL, `manufacturer` TEXT NOT NULL, `batch_number` TEXT NOT NULL, `barcode` TEXT, `quantity` REAL NOT NULL, `unit` TEXT NOT NULL, `low_stock_threshold` REAL, `purchase_date` INTEGER, `expiry_date` INTEGER NOT NULL, `opened_date` INTEGER, `use_within_days_after_opening` INTEGER, `prescribed_by` TEXT NOT NULL, `prescription_date` INTEGER, `prescribed_for_member_id` INTEGER, `prescribed_for_reason` TEXT NOT NULL DEFAULT '', `prescription_start_date` INTEGER, `prescription_end_date` INTEGER, `dosage_instructions` TEXT NOT NULL, `storage_location_id` INTEGER, `is_prescription` INTEGER NOT NULL, `notes` TEXT NOT NULL, `status` TEXT NOT NULL, `created_at` INTEGER NOT NULL, `updated_at` INTEGER NOT NULL, FOREIGN KEY(`storage_location_id`) REFERENCES `storage_locations`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "brandName",
+            "columnName": "brand_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "genericName",
+            "columnName": "generic_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "strength",
+            "columnName": "strength",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "form",
+            "columnName": "form",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "manufacturer",
+            "columnName": "manufacturer",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "batchNumber",
+            "columnName": "batch_number",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "barcode",
+            "columnName": "barcode",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "quantity",
+            "columnName": "quantity",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "unit",
+            "columnName": "unit",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lowStockThreshold",
+            "columnName": "low_stock_threshold",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "purchaseDate",
+            "columnName": "purchase_date",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "expiryDate",
+            "columnName": "expiry_date",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "openedDate",
+            "columnName": "opened_date",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "useWithinDaysAfterOpening",
+            "columnName": "use_within_days_after_opening",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "prescribedBy",
+            "columnName": "prescribed_by",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "prescriptionDate",
+            "columnName": "prescription_date",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "prescribedForMemberId",
+            "columnName": "prescribed_for_member_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "prescribedForReason",
+            "columnName": "prescribed_for_reason",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
+          },
+          {
+            "fieldPath": "prescriptionStartDate",
+            "columnName": "prescription_start_date",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "prescriptionEndDate",
+            "columnName": "prescription_end_date",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "dosageInstructions",
+            "columnName": "dosage_instructions",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "storageLocationId",
+            "columnName": "storage_location_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "isPrescription",
+            "columnName": "is_prescription",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "notes",
+            "columnName": "notes",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "status",
+            "columnName": "status",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "updatedAt",
+            "columnName": "updated_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_medicines_storage_location_id",
+            "unique": false,
+            "columnNames": [
+              "storage_location_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_medicines_storage_location_id` ON `${TABLE_NAME}` (`storage_location_id`)"
+          },
+          {
+            "name": "index_medicines_barcode",
+            "unique": false,
+            "columnNames": [
+              "barcode"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_medicines_barcode` ON `${TABLE_NAME}` (`barcode`)"
+          },
+          {
+            "name": "index_medicines_status",
+            "unique": false,
+            "columnNames": [
+              "status"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_medicines_status` ON `${TABLE_NAME}` (`status`)"
+          },
+          {
+            "name": "index_medicines_expiry_date",
+            "unique": false,
+            "columnNames": [
+              "expiry_date"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_medicines_expiry_date` ON `${TABLE_NAME}` (`expiry_date`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "storage_locations",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "storage_location_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "medicine_members",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`medicine_id` INTEGER NOT NULL, `member_id` INTEGER NOT NULL, `condition` TEXT, PRIMARY KEY(`medicine_id`, `member_id`), FOREIGN KEY(`medicine_id`) REFERENCES `medicines`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`member_id`) REFERENCES `family_members`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "medicineId",
+            "columnName": "medicine_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "memberId",
+            "columnName": "member_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "condition",
+            "columnName": "condition",
+            "affinity": "TEXT"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "medicine_id",
+            "member_id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_medicine_members_member_id",
+            "unique": false,
+            "columnNames": [
+              "member_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_medicine_members_member_id` ON `${TABLE_NAME}` (`member_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "medicines",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "medicine_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "family_members",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "member_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "medicine_photos",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `medicine_id` INTEGER NOT NULL, `type` TEXT NOT NULL, `file_name` TEXT NOT NULL, `created_at` INTEGER NOT NULL, FOREIGN KEY(`medicine_id`) REFERENCES `medicines`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "medicineId",
+            "columnName": "medicine_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fileName",
+            "columnName": "file_name",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_medicine_photos_medicine_id",
+            "unique": false,
+            "columnNames": [
+              "medicine_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_medicine_photos_medicine_id` ON `${TABLE_NAME}` (`medicine_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "medicines",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "medicine_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "medicine_events",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `medicine_id` INTEGER NOT NULL, `type` TEXT NOT NULL, `quantity_delta` REAL, `from_status` TEXT, `to_status` TEXT, `note` TEXT, `at` INTEGER NOT NULL, FOREIGN KEY(`medicine_id`) REFERENCES `medicines`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "medicineId",
+            "columnName": "medicine_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "type",
+            "columnName": "type",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "quantityDelta",
+            "columnName": "quantity_delta",
+            "affinity": "REAL"
+          },
+          {
+            "fieldPath": "fromStatus",
+            "columnName": "from_status",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "toStatus",
+            "columnName": "to_status",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "note",
+            "columnName": "note",
+            "affinity": "TEXT"
+          },
+          {
+            "fieldPath": "at",
+            "columnName": "at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_medicine_events_medicine_id",
+            "unique": false,
+            "columnNames": [
+              "medicine_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_medicine_events_medicine_id` ON `${TABLE_NAME}` (`medicine_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "medicines",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "medicine_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "condition_suggestions",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`text` TEXT NOT NULL COLLATE NOCASE, `last_used_at` INTEGER NOT NULL, PRIMARY KEY(`text`))",
+        "fields": [
+          {
+            "fieldPath": "text",
+            "columnName": "text",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "lastUsedAt",
+            "columnName": "last_used_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "text"
+          ]
+        }
+      },
+      {
+        "tableName": "dose_schedules",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `medicine_id` INTEGER NOT NULL, `member_id` INTEGER, `kind` TEXT NOT NULL, `dose_per_intake` REAL NOT NULL, `times_per_day` INTEGER NOT NULL, `start_date` INTEGER NOT NULL, `end_date` INTEGER, `created_at` INTEGER NOT NULL, FOREIGN KEY(`medicine_id`) REFERENCES `medicines`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`member_id`) REFERENCES `family_members`(`id`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "medicineId",
+            "columnName": "medicine_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "memberId",
+            "columnName": "member_id",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "kind",
+            "columnName": "kind",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "dosePerIntake",
+            "columnName": "dose_per_intake",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "timesPerDay",
+            "columnName": "times_per_day",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "startDate",
+            "columnName": "start_date",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "endDate",
+            "columnName": "end_date",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "createdAt",
+            "columnName": "created_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_dose_schedules_medicine_id",
+            "unique": false,
+            "columnNames": [
+              "medicine_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_dose_schedules_medicine_id` ON `${TABLE_NAME}` (`medicine_id`)"
+          },
+          {
+            "name": "index_dose_schedules_member_id",
+            "unique": false,
+            "columnNames": [
+              "member_id"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_dose_schedules_member_id` ON `${TABLE_NAME}` (`member_id`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "medicines",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "medicine_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          },
+          {
+            "table": "family_members",
+            "onDelete": "SET NULL",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "member_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      },
+      {
+        "tableName": "dose_logs",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER PRIMARY KEY AUTOINCREMENT NOT NULL, `schedule_id` INTEGER NOT NULL, `date` INTEGER NOT NULL, `slot` INTEGER NOT NULL, `quantity` REAL NOT NULL, `taken_at` INTEGER NOT NULL, FOREIGN KEY(`schedule_id`) REFERENCES `dose_schedules`(`id`) ON UPDATE NO ACTION ON DELETE CASCADE )",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "scheduleId",
+            "columnName": "schedule_id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "date",
+            "columnName": "date",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "slot",
+            "columnName": "slot",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "quantity",
+            "columnName": "quantity",
+            "affinity": "REAL",
+            "notNull": true
+          },
+          {
+            "fieldPath": "takenAt",
+            "columnName": "taken_at",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": true,
+          "columnNames": [
+            "id"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_dose_logs_schedule_id_date_slot",
+            "unique": true,
+            "columnNames": [
+              "schedule_id",
+              "date",
+              "slot"
+            ],
+            "orders": [],
+            "createSql": "CREATE UNIQUE INDEX IF NOT EXISTS `index_dose_logs_schedule_id_date_slot` ON `${TABLE_NAME}` (`schedule_id`, `date`, `slot`)"
+          },
+          {
+            "name": "index_dose_logs_date",
+            "unique": false,
+            "columnNames": [
+              "date"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_dose_logs_date` ON `${TABLE_NAME}` (`date`)"
+          }
+        ],
+        "foreignKeys": [
+          {
+            "table": "dose_schedules",
+            "onDelete": "CASCADE",
+            "onUpdate": "NO ACTION",
+            "columns": [
+              "schedule_id"
+            ],
+            "referencedColumns": [
+              "id"
+            ]
+          }
+        ]
+      }
+    ],
+    "setupQueries": [
+      "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '7b9726337f8610d91d5f5493a96174bd')"
+    ]
+  }
+}

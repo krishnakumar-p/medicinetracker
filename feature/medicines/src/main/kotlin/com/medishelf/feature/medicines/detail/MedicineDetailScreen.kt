@@ -31,6 +31,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.testTag
 import androidx.compose.ui.platform.LocalResources
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
@@ -52,6 +53,7 @@ import com.medishelf.feature.medicines.R
 internal data class MedicineDetailActions(
     val onNavigateUp: () -> Unit = {},
     val onEdit: () -> Unit = {},
+    val onTakeRegularly: () -> Unit = {},
     val onUse: (Double?) -> Unit = {},
     val onMarkFinished: () -> Unit = {},
     val onMarkDisposed: (String) -> Unit = {},
@@ -65,6 +67,7 @@ internal data class MedicineDetailActions(
 internal fun MedicineDetailScreen(
     onNavigateUp: () -> Unit,
     onEdit: (Long) -> Unit,
+    onTakeRegularly: (Long) -> Unit = {},
     viewModel: MedicineDetailViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -80,6 +83,7 @@ internal fun MedicineDetailScreen(
         actions = MedicineDetailActions(
             onNavigateUp = onNavigateUp,
             onEdit = { state.details?.let { onEdit(it.medicine.id) } },
+            onTakeRegularly = { state.details?.let { onTakeRegularly(it.medicine.id) } },
             onUse = viewModel::onUse,
             onMarkFinished = viewModel::onMarkFinished,
             onMarkDisposed = viewModel::onMarkDisposed,
@@ -140,8 +144,15 @@ internal fun MedicineDetailContent(state: MedicineDetailUiState, actions: Medici
                 if (details.medicine.effectiveStatus(state.today) == MedicineStatus.EXPIRED) {
                     item { DisposalGuidanceCard() }
                 }
-                item { ActionButtons(details.medicine.status, onDialog = { dialog = it }, onRestore = actions.onRestore) }
-                item { DetailSections(details, state.today) }
+                item {
+                    ActionButtons(
+                        details.medicine.status,
+                        onDialog = { dialog = it },
+                        onRestore = actions.onRestore,
+                        onTakeRegularly = actions.onTakeRegularly,
+                    )
+                }
+                item { DetailSections(details, state.today, state.schedules) }
                 item {
                     PhotoSection(
                         photos = state.photos,
@@ -179,7 +190,12 @@ private fun Header(details: MedicineDetails, state: MedicineDetailUiState) {
 
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-private fun ActionButtons(status: MedicineStatus, onDialog: (DetailDialog) -> Unit, onRestore: () -> Unit) {
+private fun ActionButtons(
+    status: MedicineStatus,
+    onDialog: (DetailDialog) -> Unit,
+    onRestore: () -> Unit,
+    onTakeRegularly: () -> Unit,
+) {
     FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
         when (status) {
             MedicineStatus.ACTIVE, MedicineStatus.EXPIRED -> {
@@ -189,6 +205,9 @@ private fun ActionButtons(status: MedicineStatus, onDialog: (DetailDialog) -> Un
                 }
                 OutlinedButton(onClick = { onDialog(DetailDialog.Dispose) }) {
                     Text(stringResource(R.string.feature_medicines_mark_disposed))
+                }
+                OutlinedButton(onClick = onTakeRegularly, modifier = Modifier.testTag("take_regularly")) {
+                    Text(stringResource(R.string.feature_medicines_take_regularly))
                 }
             }
             MedicineStatus.FINISHED -> {

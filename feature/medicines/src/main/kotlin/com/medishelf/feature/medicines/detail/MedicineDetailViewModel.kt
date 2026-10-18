@@ -5,6 +5,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import androidx.navigation.toRoute
 import com.medishelf.core.common.TimeProvider
+import com.medishelf.core.domain.repository.DoseRepository
 import com.medishelf.core.domain.repository.MedicineRepository
 import com.medishelf.core.domain.repository.PhotoStore
 import com.medishelf.core.domain.usecase.AddMedicinePhotoUseCase
@@ -12,6 +13,7 @@ import com.medishelf.core.domain.usecase.ReduceQuantityResult
 import com.medishelf.core.domain.usecase.ReduceQuantityUseCase
 import com.medishelf.core.domain.usecase.RemoveMedicinePhotoUseCase
 import com.medishelf.core.domain.usecase.UpdateMedicineStatusUseCase
+import com.medishelf.core.model.DoseSchedule
 import com.medishelf.core.model.MedicineDetails
 import com.medishelf.core.model.MedicineEvent
 import com.medishelf.core.model.MedicinePhoto
@@ -36,6 +38,7 @@ data class MedicineDetailUiState(
     val details: MedicineDetails? = null,
     val photos: List<PhotoUi> = emptyList(),
     val history: List<MedicineEvent> = emptyList(),
+    val schedules: List<DoseSchedule> = emptyList(),
     val today: LocalDate = LocalDate.MIN,
     val message: DetailMessage? = null,
 )
@@ -44,6 +47,7 @@ data class MedicineDetailUiState(
 class MedicineDetailViewModel @Inject constructor(
     savedStateHandle: SavedStateHandle,
     medicines: MedicineRepository,
+    doses: DoseRepository,
     private val photoStore: PhotoStore,
     private val reduceQuantity: ReduceQuantityUseCase,
     private val updateStatus: UpdateMedicineStatusUseCase,
@@ -58,13 +62,15 @@ class MedicineDetailViewModel @Inject constructor(
     val uiState: StateFlow<MedicineDetailUiState> = combine(
         medicines.observe(id),
         medicines.observeEvents(id),
+        doses.observeSchedules(),
         message,
-    ) { details, history, message ->
+    ) { details, history, schedules, message ->
         MedicineDetailUiState(
             isLoading = false,
             details = details,
             photos = details?.photos.orEmpty().map { PhotoUi(it, photoStore.absolutePath(it.fileName)) },
             history = history,
+            schedules = schedules.filter { it.medicineId == id },
             today = time.today(),
             message = message,
         )

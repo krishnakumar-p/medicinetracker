@@ -32,4 +32,5 @@ internal object DatabaseModule {
     @Provides fun storageLocationDao(db: MediShelfDatabase) = db.storageLocationDao()
     @Provides fun conditionSuggestionDao(db: MediShelfDatabase) = db.conditionSuggestionDao()
     @Provides fun backupDao(db: MediShelfDatabase) = db.backupDao()
+    @Provides fun doseDao(db: MediShelfDatabase) = db.doseDao()
 }

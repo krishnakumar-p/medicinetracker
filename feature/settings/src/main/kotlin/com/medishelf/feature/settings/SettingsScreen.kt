@@ -71,6 +71,7 @@ internal fun SettingsScreen(
     onOpenAppLock: () -> Unit,
     showDeveloperOptions: Boolean,
     versionName: String,
+    onNavigateUp: (() -> Unit)? = null,
     viewModel: SettingsViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
@@ -100,7 +101,7 @@ internal fun SettingsScreen(
     val today = LocalDate.now()
 
     Scaffold(
-        topBar = { MediShelfTopBar(stringResource(R.string.feature_settings_title)) },
+        topBar = { MediShelfTopBar(stringResource(R.string.feature_settings_title), onNavigateUp = onNavigateUp) },
         snackbarHost = { SnackbarHost(snackbar) },
     ) { padding ->
         Column(Modifier.padding(padding).fillMaxSize().verticalScroll(rememberScrollState())) {

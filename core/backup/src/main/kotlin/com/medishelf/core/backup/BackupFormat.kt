@@ -2,12 +2,15 @@ package com.medishelf.core.backup
 
 import com.medishelf.core.database.dao.DatabaseSnapshot
 import com.medishelf.core.database.entity.ConditionSuggestionEntity
+import com.medishelf.core.database.entity.DoseLogEntity
+import com.medishelf.core.database.entity.DoseScheduleEntity
 import com.medishelf.core.database.entity.FamilyMemberEntity
 import com.medishelf.core.database.entity.MedicineEntity
 import com.medishelf.core.database.entity.MedicineEventEntity
 import com.medishelf.core.database.entity.MedicineMemberCrossRef
 import com.medishelf.core.database.entity.MedicinePhotoEntity
 import com.medishelf.core.database.entity.StorageLocationEntity
+import com.medishelf.core.model.DoseScheduleKind
 import com.medishelf.core.model.MedicineEventType
 import com.medishelf.core.model.MedicineForm
 import com.medishelf.core.model.MedicineStatus
@@ -22,7 +25,8 @@ import java.time.LocalDate
  * Dates are ISO-8601, instants epoch millis, enums by name. Bump [CURRENT_SCHEMA] on breaking changes.
  */
 internal const val BACKUP_FORMAT = "medishelf-backup"
-internal const val CURRENT_SCHEMA = 1
+// 2: prescribed-for, prescription start/end, dose schedules and dose log. Version 1 files still import.
+internal const val CURRENT_SCHEMA = 2
 
 @Serializable
 internal data class BackupManifest(
@@ -43,11 +47,18 @@ internal data class BackupManifest(
     val useWithinDaysAfterOpening: Int?, val prescribedBy: String, val prescriptionDate: String?,
     val dosageInstructions: String, val storageLocationId: Long?, val isPrescription: Boolean, val notes: String,
     val status: String, val createdAt: Long, val updatedAt: Long,
+    val prescribedForMemberId: Long? = null, val prescribedForReason: String = "",
+    val prescriptionStartDate: String? = null, val prescriptionEndDate: String? = null,
 )
 @Serializable internal data class AssignmentDto(val medicineId: Long, val memberId: Long, val condition: String?)
 @Serializable internal data class PhotoDto(val id: Long, val medicineId: Long, val type: String, val fileName: String, val createdAt: Long)
 @Serializable internal data class EventDto(val id: Long, val medicineId: Long, val type: String, val quantityDelta: Double?, val fromStatus: String?, val toStatus: String?, val note: String?, val at: Long)
 @Serializable internal data class SuggestionDto(val text: String, val lastUsedAt: Long)
+@Serializable internal data class ScheduleDto(
+    val id: Long, val medicineId: Long, val memberId: Long?, val kind: String, val dosePerIntake: Double,
+    val timesPerDay: Int, val startDate: String, val endDate: String?, val createdAt: Long,
+)
+@Serializable internal data class DoseLogDto(val id: Long, val scheduleId: Long, val date: String, val slot: Int, val quantity: Double, val takenAt: Long)
 
 @Serializable
 internal data class BackupPayload(
@@ -58,6 +69,8 @@ internal data class BackupPayload(
     val photos: List<PhotoDto>,
     val events: List<EventDto>,
     val suggestions: List<SuggestionDto>,
+    val schedules: List<ScheduleDto> = emptyList(),
+    val doseLogs: List<DoseLogDto> = emptyList(),
 ) {
     /** File names referenced by records, i.e. the photos that belong in the archive. */
     val photoFiles: Set<String>
@@ -75,7 +88,12 @@ internal data class BackupPayload(
             assignments.all { it.medicineId in medicineIds && it.memberId in memberIds } &&
             photos.all { it.medicineId in medicineIds && isSafeFileName(it.fileName) } &&
             locations.all { it.photoFileName == null || isSafeFileName(it.photoFileName) } &&
-            events.all { it.medicineId in medicineIds }
+            events.all { it.medicineId in medicineIds } &&
+            schedules.map { it.id }.toSet().let { scheduleIds ->
+                scheduleIds.size == schedules.size &&
+                    schedules.all { it.medicineId in medicineIds && (it.memberId == null || it.memberId in memberIds) } &&
+                    doseLogs.all { it.scheduleId in scheduleIds }
+            }
     }
 }
 
@@ -92,12 +110,21 @@ internal fun DatabaseSnapshot.toPayload() = BackupPayload(
             it.openedDate?.toString(), it.useWithinDaysAfterOpening, it.prescribedBy, it.prescriptionDate?.toString(),
             it.dosageInstructions, it.storageLocationId, it.isPrescription, it.notes, it.status.name,
             it.createdAt.toEpochMilli(), it.updatedAt.toEpochMilli(),
+            it.prescribedForMemberId, it.prescribedForReason,
+            it.prescriptionStartDate?.toString(), it.prescriptionEndDate?.toString(),
         )
     },
     assignments = assignments.map { AssignmentDto(it.medicineId, it.memberId, it.condition) },
     photos = photos.map { PhotoDto(it.id, it.medicineId, it.type.name, it.fileName, it.createdAt.toEpochMilli()) },
     events = events.map { EventDto(it.id, it.medicineId, it.type.name, it.quantityDelta, it.fromStatus?.name, it.toStatus?.name, it.note, it.at.toEpochMilli()) },
     suggestions = suggestions.map { SuggestionDto(it.text, it.lastUsedAt.toEpochMilli()) },
+    schedules = schedules.map {
+        ScheduleDto(
+            it.id, it.medicineId, it.memberId, it.kind.name, it.dosePerIntake, it.timesPerDay,
+            it.startDate.toString(), it.endDate?.toString(), it.createdAt.toEpochMilli(),
+        )
+    },
+    doseLogs = doseLogs.map { DoseLogDto(it.id, it.scheduleId, it.date.toString(), it.slot, it.quantity, it.takenAt.toEpochMilli()) },
 )
 
 /** Throws IllegalArgumentException on unknown enum names or malformed dates. */
@@ -116,6 +143,11 @@ internal fun BackupPayload.toSnapshot() = DatabaseSnapshot(
             storageLocationId = it.storageLocationId, isPrescription = it.isPrescription, notes = it.notes,
             status = MedicineStatus.valueOf(it.status), createdAt = Instant.ofEpochMilli(it.createdAt),
             updatedAt = Instant.ofEpochMilli(it.updatedAt),
+            // A member deleted before the backup was taken leaves no dangling reference.
+            prescribedForMemberId = it.prescribedForMemberId?.takeIf { id -> members.any { m -> m.id == id } },
+            prescribedForReason = it.prescribedForReason,
+            prescriptionStartDate = it.prescriptionStartDate?.let(LocalDate::parse),
+            prescriptionEndDate = it.prescriptionEndDate?.let(LocalDate::parse),
         )
     },
     assignments = assignments.map { MedicineMemberCrossRef(it.medicineId, it.memberId, it.condition) },
@@ -127,4 +159,11 @@ internal fun BackupPayload.toSnapshot() = DatabaseSnapshot(
         )
     },
     suggestions = suggestions.map { ConditionSuggestionEntity(it.text, Instant.ofEpochMilli(it.lastUsedAt)) },
+    schedules = schedules.map {
+        DoseScheduleEntity(
+            it.id, it.medicineId, it.memberId, DoseScheduleKind.valueOf(it.kind), it.dosePerIntake, it.timesPerDay,
+            LocalDate.parse(it.startDate), it.endDate?.let(LocalDate::parse), Instant.ofEpochMilli(it.createdAt),
+        )
+    },
+    doseLogs = doseLogs.map { DoseLogEntity(it.id, it.scheduleId, LocalDate.parse(it.date), it.slot, it.quantity, Instant.ofEpochMilli(it.takenAt)) },
 )

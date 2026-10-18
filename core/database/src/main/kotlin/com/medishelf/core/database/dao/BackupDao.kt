@@ -5,6 +5,8 @@ import androidx.room.Insert
 import androidx.room.Query
 import androidx.room.Transaction
 import com.medishelf.core.database.entity.ConditionSuggestionEntity
+import com.medishelf.core.database.entity.DoseLogEntity
+import com.medishelf.core.database.entity.DoseScheduleEntity
 import com.medishelf.core.database.entity.FamilyMemberEntity
 import com.medishelf.core.database.entity.MedicineEntity
 import com.medishelf.core.database.entity.MedicineEventEntity
@@ -21,6 +23,8 @@ data class DatabaseSnapshot(
     val photos: List<MedicinePhotoEntity>,
     val events: List<MedicineEventEntity>,
     val suggestions: List<ConditionSuggestionEntity>,
+    val schedules: List<DoseScheduleEntity> = emptyList(),
+    val doseLogs: List<DoseLogEntity> = emptyList(),
 )
 
 @Dao
@@ -32,6 +36,8 @@ interface BackupDao {
     @Query("SELECT * FROM medicine_photos") suspend fun photos(): List<MedicinePhotoEntity>
     @Query("SELECT * FROM medicine_events") suspend fun events(): List<MedicineEventEntity>
     @Query("SELECT * FROM condition_suggestions") suspend fun suggestions(): List<ConditionSuggestionEntity>
+    @Query("SELECT * FROM dose_schedules") suspend fun schedules(): List<DoseScheduleEntity>
+    @Query("SELECT * FROM dose_logs") suspend fun doseLogs(): List<DoseLogEntity>
 
     @Insert suspend fun insertMembers(rows: List<FamilyMemberEntity>)
     @Insert suspend fun insertLocations(rows: List<StorageLocationEntity>)
@@ -40,7 +46,11 @@ interface BackupDao {
     @Insert suspend fun insertPhotos(rows: List<MedicinePhotoEntity>)
     @Insert suspend fun insertEvents(rows: List<MedicineEventEntity>)
     @Insert suspend fun insertSuggestions(rows: List<ConditionSuggestionEntity>)
+    @Insert suspend fun insertSchedules(rows: List<DoseScheduleEntity>)
+    @Insert suspend fun insertDoseLogs(rows: List<DoseLogEntity>)
 
+    @Query("DELETE FROM dose_logs") suspend fun deleteDoseLogs()
+    @Query("DELETE FROM dose_schedules") suspend fun deleteSchedules()
     @Query("DELETE FROM medicine_events") suspend fun deleteEvents()
     @Query("DELETE FROM medicine_photos") suspend fun deletePhotos()
     @Query("DELETE FROM medicine_members") suspend fun deleteAssignments()
@@ -50,11 +60,14 @@ interface BackupDao {
     @Query("DELETE FROM condition_suggestions") suspend fun deleteSuggestions()
 
     @Transaction
-    suspend fun snapshot() = DatabaseSnapshot(members(), locations(), medicines(), assignments(), photos(), events(), suggestions())
+    suspend fun snapshot() = DatabaseSnapshot(
+        members(), locations(), medicines(), assignments(), photos(), events(), suggestions(), schedules(), doseLogs(),
+    )
 
     /** Swaps the whole inventory in one transaction: a failure part-way leaves the old data intact. */
     @Transaction
     suspend fun replaceAll(snapshot: DatabaseSnapshot) {
+        deleteDoseLogs(); deleteSchedules()
         deleteEvents(); deletePhotos(); deleteAssignments(); deleteMedicines()
         deleteMembers(); deleteLocations(); deleteSuggestions()
         insertMembers(snapshot.members)
@@ -64,5 +77,7 @@ interface BackupDao {
         insertPhotos(snapshot.photos)
         insertEvents(snapshot.events)
         insertSuggestions(snapshot.suggestions)
+        insertSchedules(snapshot.schedules)
+        insertDoseLogs(snapshot.doseLogs)
     }
 }

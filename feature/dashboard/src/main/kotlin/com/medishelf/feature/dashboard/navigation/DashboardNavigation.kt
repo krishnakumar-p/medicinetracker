@@ -18,6 +18,9 @@ fun NavGraphBuilder.dashboardScreen(
     onAddMedicine: () -> Unit,
     onScanBarcode: () -> Unit,
     onMedicineClick: (Long) -> Unit,
+    onSearch: () -> Unit,
+    onOpenSettings: () -> Unit,
+    onOpenDoses: () -> Unit,
 ) {
     composable<DashboardRoute> {
         DashboardScreen(
@@ -25,6 +28,9 @@ fun NavGraphBuilder.dashboardScreen(
             onAddMedicine = onAddMedicine,
             onScanBarcode = onScanBarcode,
             onMedicineClick = onMedicineClick,
+            onSearch = onSearch,
+            onOpenSettings = onOpenSettings,
+            onOpenDoses = onOpenDoses,
         )
     }
 }

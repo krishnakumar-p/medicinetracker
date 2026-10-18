@@ -5,6 +5,7 @@ import androidx.test.core.app.ApplicationProvider
 import com.google.common.truth.Truth.assertThat
 import com.medishelf.core.data.repository.RoomConditionSuggestionRepository
 import com.medishelf.core.data.repository.RoomFamilyMemberRepository
+import com.medishelf.core.data.repository.RoomDoseRepository
 import com.medishelf.core.data.repository.RoomMedicineRepository
 import com.medishelf.core.data.repository.RoomStorageLocationRepository
 import com.medishelf.core.database.MediShelfDatabase
@@ -39,7 +40,8 @@ class RoomRepositoriesTest {
     private val members = RoomFamilyMemberRepository(db.familyMemberDao())
     private val locations = RoomStorageLocationRepository(db.storageLocationDao())
     private val suggestions = RoomConditionSuggestionRepository(db.conditionSuggestionDao(), time)
-    private val save = SaveMedicineUseCase(medicines, suggestions, MedicineValidator(), time)
+    private val doses = RoomDoseRepository(db.doseDao())
+    private val save = SaveMedicineUseCase(medicines, suggestions, MedicineValidator(), time, doses)
 
     @After
     fun tearDown() = db.close()

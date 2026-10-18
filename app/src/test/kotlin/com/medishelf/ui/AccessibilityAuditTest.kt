@@ -8,6 +8,7 @@ import androidx.compose.ui.test.onNodeWithTag
 import androidx.compose.ui.test.onNodeWithText
 import androidx.compose.ui.test.onRoot
 import androidx.compose.ui.test.performClick
+import androidx.compose.ui.test.performTextInput
 import androidx.compose.ui.test.performTouchInput
 import androidx.compose.ui.test.swipeDown
 import androidx.compose.ui.test.swipeUp
@@ -83,10 +84,17 @@ class AccessibilityAuditTest {
     fun topLevelScreens() {
         launchApp()
         auditScrolling(2) // Home
-        listOf("nav_MEDICINES", "nav_WHERE", "nav_FAMILY", "nav_SETTINGS").forEach {
+        listOf("nav_MEDICINES", "nav_DOSES", "nav_WHERE", "nav_FAMILY").forEach {
             compose.onNodeWithTag(it).performClick()
             auditScrolling(2)
         }
+        compose.onNodeWithTag("nav_HOME").performClick()
+        compose.onNodeWithTag("open_settings").performClick()
+        auditScrolling(2)
+        compose.onNodeWithContentDescription("Navigate up").performClick()
+        compose.onNodeWithTag("open_search").performClick()
+        compose.onNodeWithTag("search_field").performTextInput("sara")
+        auditScrolling(2)
     }
 
     @Test
@@ -105,7 +113,12 @@ class AccessibilityAuditTest {
         compose.onNodeWithText("Sara").performClick()
         audit() // per-person
         compose.onNodeWithContentDescription("Navigate up").performClick()
-        compose.onNodeWithTag("nav_SETTINGS").performClick()
+        compose.onNodeWithTag("nav_DOSES").performClick()
+        compose.onNodeWithTag("add_continuous").performClick()
+        auditScrolling(2) // continuous medication form
+        compose.onNodeWithContentDescription("Navigate up").performClick()
+        compose.onNodeWithTag("nav_HOME").performClick()
+        compose.onNodeWithTag("open_settings").performClick()
         compose.onAllNodesWithText("App lock").onFirst().performClick()
         audit()
     }

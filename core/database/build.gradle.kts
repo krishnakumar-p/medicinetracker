@@ -20,3 +20,10 @@ android {
         consumerProguardFiles("proguard-consumer.pro")
     }
 }
+
+// Exported schemas feed MigrationTestHelper in the Robolectric tests.
+androidComponents {
+    onVariants { variant ->
+        variant.hostTests.values.forEach { it.sources.assets?.addStaticSourceDirectory("$projectDir/schemas") }
+    }
+}
