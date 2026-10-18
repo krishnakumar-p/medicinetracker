@@ -41,7 +41,7 @@
     <string name="feature_medicines_section_medicine">Medicine</string>
     <string name="feature_medicines_section_stock">Stock</string>
     <string name="feature_medicines_section_dates">Dates</string>
-    <string name="feature_medicines_section_people">Prescribed for</string>
+    <string name="feature_medicines_section_people">Who takes it</string>
     <string name="feature_medicines_section_prescription">Prescription</string>
     <string name="feature_medicines_section_storage">Storage</string>
     <string name="feature_medicines_section_details">Details</string>
@@ -72,9 +72,10 @@
     <string name="feature_medicines_field_prescribed_by">Prescribed by (doctor)</string>
     <string name="feature_medicines_field_prescription_date">Prescription date</string>
     <string name="feature_medicines_prescribed_for">Prescribed for</string>
-    <string name="feature_medicines_field_prescribed_for_person">Person</string>
+    <string name="feature_medicines_field_prescribed_for_person">Prescribed for (person)</string>
     <string name="feature_medicines_prescribed_for_nobody">Not set</string>
-    <string name="feature_medicines_field_prescribed_for_reason">Reason or condition</string>
+    <string name="feature_medicines_field_prescribed_for_reason">Prescribed for</string>
+    <string name="feature_medicines_prescribed_for_reason_help">Condition or reason, e.g. Ear infection</string>
     <string name="feature_medicines_field_prescription_start">Start date</string>
     <string name="feature_medicines_field_prescription_end">End date</string>
     <string name="feature_medicines_prescription_end_help">Leave empty for an ongoing prescription</string>

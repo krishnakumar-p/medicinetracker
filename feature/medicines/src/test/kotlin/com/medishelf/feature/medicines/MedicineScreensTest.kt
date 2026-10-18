@@ -64,4 +64,19 @@ class MedicineScreensTest {
         compose.onNodeWithText("Enter the expiry date").performScrollTo().assertExists()
         assert(savedId == null)
     }
+
+    @Test
+    fun edit_prescriptionCard_hasPrescribedForField_evenWithoutFamilyMembers() {
+        val vm = f.editViewModel()
+        compose.setContent { MediShelfTheme { MedicineEditScreen(onNavigateUp = {}, onSaved = { _, _ -> }, viewModel = vm) } }
+
+        // The people card no longer reuses the "Prescribed for" title, so the label is unique.
+        compose.onAllNodesWithText("Prescribed for").assertCountEquals(1)
+        compose.onNodeWithText("Who takes it").assertExists()
+        compose.onNodeWithTag("field_prescribed_for_reason").performScrollTo().performTextInput("Ear infection")
+        compose.onNodeWithText("Condition or reason, e.g. Ear infection").assertExists()
+        // No family members yet: no empty person picker.
+        compose.onNodeWithTag("field_prescribed_for_person").assertDoesNotExist()
+        assert(vm.uiState.value.form.prescribedForReason == "Ear infection")
+    }
 }

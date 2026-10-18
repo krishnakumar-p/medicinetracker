@@ -65,25 +65,28 @@ internal fun PrescriptionSection(
             supporting = scannedNote(ScannedField.PRESCRIBER in state.scannedFields),
             capitalization = KeyboardCapitalization.Words,
         )
-        Text(stringResource(R.string.feature_medicines_prescribed_for), style = MaterialTheme.typography.titleSmall)
-        val memberOptions = listOf(null) + state.members.map { it.id }
-        DropdownField(
-            label = stringResource(R.string.feature_medicines_field_prescribed_for_person),
-            options = memberOptions,
-            selected = form.prescribedForMemberId?.takeIf { id -> state.members.any { it.id == id } },
-            optionLabel = { id ->
-                state.members.find { it.id == id }?.name ?: stringResource(R.string.feature_medicines_prescribed_for_nobody)
-            },
-            onSelect = { v -> update { it.copy(prescribedForMemberId = v) } },
-            modifier = Modifier.testTag("field_prescribed_for_person"),
-        )
         TextInput(
             label = stringResource(R.string.feature_medicines_field_prescribed_for_reason),
             value = form.prescribedForReason,
             onValueChange = { v -> update { it.copy(prescribedForReason = v) } },
-            supporting = scannedNote(ScannedField.PRESCRIBED_FOR in state.scannedFields),
+            supporting = scannedNote(ScannedField.PRESCRIBED_FOR in state.scannedFields)
+                ?: stringResource(R.string.feature_medicines_prescribed_for_reason_help),
             tag = "field_prescribed_for_reason",
         )
+        // Picking the person needs family members; without any, the reason field above is enough.
+        if (state.members.isNotEmpty()) {
+            val memberOptions = listOf(null) + state.members.map { it.id }
+            DropdownField(
+                label = stringResource(R.string.feature_medicines_field_prescribed_for_person),
+                options = memberOptions,
+                selected = form.prescribedForMemberId?.takeIf { id -> state.members.any { it.id == id } },
+                optionLabel = { id ->
+                    state.members.find { it.id == id }?.name ?: stringResource(R.string.feature_medicines_prescribed_for_nobody)
+                },
+                onSelect = { v -> update { it.copy(prescribedForMemberId = v) } },
+                modifier = Modifier.testTag("field_prescribed_for_person"),
+            )
+        }
         DateField(
             label = stringResource(R.string.feature_medicines_field_prescription_date),
             date = form.prescriptionDate,
