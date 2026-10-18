@@ -133,7 +133,7 @@ fun MediShelfNavHost(
  * Opened from the editor: hand the result back to it. Opened from elsewhere (dashboard):
  * replace the scanner with a new editor and hand the result to that.
  */
-private fun NavHostController.deliverScanResult(result: ScanSuggestion) {
+internal fun NavHostController.deliverScanResult(result: ScanSuggestion) {
     val previous = previousBackStackEntry
     if (previous?.destination?.hasRoute<MedicineEditRoute>() == true) {
         ScanResultTransfer.put(previous.savedStateHandle, result)

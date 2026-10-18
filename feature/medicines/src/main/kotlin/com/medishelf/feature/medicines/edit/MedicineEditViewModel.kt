@@ -19,7 +19,6 @@ import com.medishelf.core.model.DoseScheduleKind
 import com.medishelf.core.model.FamilyMember
 import com.medishelf.core.model.ScanSuggestion
 import com.medishelf.core.model.StorageLocation
-import com.medishelf.core.ui.ScanResultTransfer
 import com.medishelf.core.ui.toEditableString
 import com.medishelf.feature.medicines.navigation.MedicineEditRoute
 import dagger.hilt.android.lifecycle.HiltViewModel
@@ -112,8 +111,18 @@ class MedicineEditViewModel @Inject constructor(
             }
             meta.update { it.copy(isLoading = false) }
         }
-        // Results from a scanner opened by this editor arrive through the back stack.
-        viewModelScope.launch { ScanResultTransfer.results(savedStateHandle).collect { applyScan(it) } }
+    }
+
+    /**
+     * A confirmed scan for this editor. The screen forwards it from the navigation back stack
+     * entry, whose SavedStateHandle is not this ViewModel's. Waits for an edited medicine to
+     * load so the loaded values don't overwrite the scan.
+     */
+    fun onScanResult(scan: ScanSuggestion) {
+        viewModelScope.launch {
+            meta.first { !it.isLoading }
+            applyScan(scan)
+        }
     }
 
     /**

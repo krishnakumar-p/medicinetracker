@@ -3,7 +3,9 @@ package com.medishelf.feature.medicines.navigation
 import androidx.navigation.NavController
 import androidx.navigation.NavGraphBuilder
 import androidx.navigation.NavOptions
+import androidx.compose.runtime.remember
 import androidx.navigation.compose.composable
+import com.medishelf.core.ui.ScanResultTransfer
 import com.medishelf.feature.medicines.detail.MedicineDetailScreen
 import com.medishelf.feature.medicines.edit.MedicineEditScreen
 import com.medishelf.feature.medicines.list.MedicineListScreen
@@ -45,12 +47,15 @@ fun NavGraphBuilder.medicinesScreens(
     composable<MedicineDetailRoute> {
         MedicineDetailScreen(onNavigateUp = onNavigateUp, onEdit = onEditMedicine, onTakeRegularly = onTakeRegularly)
     }
-    composable<MedicineEditRoute> {
+    composable<MedicineEditRoute> { entry ->
+        // The scanner puts its result in this entry's SavedStateHandle (it survives process death).
+        val scanResults = remember(entry) { ScanResultTransfer.results(entry.savedStateHandle) }
         MedicineEditScreen(
             onNavigateUp = onNavigateUp,
             onSaved = onMedicineSaved,
             onScanBarcode = onScanBarcode,
             onScanPack = onScanPack,
+            scanResults = scanResults,
         )
     }
 }

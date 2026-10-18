@@ -53,6 +53,9 @@ import com.medishelf.core.domain.validation.MedicineValidationError.QUANTITY_REQ
 import com.medishelf.core.domain.validation.MedicineValidationError.THRESHOLD_NEGATIVE
 import com.medishelf.core.domain.validation.MedicineValidationError.USE_WITHIN_NOT_POSITIVE
 import com.medishelf.core.model.MedicineForm
+import com.medishelf.core.model.ScanSuggestion
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.emptyFlow
 import com.medishelf.core.model.QuantityUnit
 import com.medishelf.core.ui.DateField
 import com.medishelf.core.ui.DropdownField
@@ -77,9 +80,12 @@ internal fun MedicineEditScreen(
     onSaved: (Long, Boolean) -> Unit,
     onScanBarcode: () -> Unit = {},
     onScanPack: () -> Unit = {},
+    /** Confirmed scans handed back through this destination's back stack entry. */
+    scanResults: Flow<ScanSuggestion> = emptyFlow(),
     viewModel: MedicineEditViewModel = hiltViewModel(),
 ) {
     val state by viewModel.uiState.collectAsStateWithLifecycle()
+    LaunchedEffect(scanResults) { scanResults.collect(viewModel::onScanResult) }
     LaunchedEffect(state.savedId) { state.savedId?.let { onSaved(it, state.isNew) } }
     MedicineEditContent(
         state = state,

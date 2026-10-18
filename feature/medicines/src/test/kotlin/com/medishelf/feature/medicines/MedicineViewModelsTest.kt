@@ -86,7 +86,7 @@ class MedicineViewModelsTest {
         f.medicines.put(testMedicine(brandName = "Augmentin", barcode = "6281"))
         val handle = androidx.lifecycle.SavedStateHandle(route = MedicineEditRoute())
         val vm = f.editViewModel(savedStateHandle = handle)
-        com.medishelf.core.ui.ScanResultTransfer.put(handle, com.medishelf.core.model.ScanSuggestion(barcode = "6281"))
+        vm.onScanResult(com.medishelf.core.model.ScanSuggestion(barcode = "6281"))
 
         val state = vm.uiState.first { it.prefilledFromBarcode }
 
@@ -142,9 +142,7 @@ class MedicineViewModelsTest {
         val vm = f.editViewModel(savedStateHandle = handle)
         backgroundScope.launch { vm.uiState.collect {} }
 
-        com.medishelf.core.ui.ScanResultTransfer.put(
-            handle,
-            com.medishelf.core.model.ScanSuggestion(
+        vm.onScanResult(com.medishelf.core.model.ScanSuggestion(
                 barcode = "6291000000017", name = "Augmentin", genericName = "Amoxicillin + Clavulanic acid",
                 strength = "457 mg/5 ml", form = com.medishelf.core.model.MedicineForm.SYRUP, quantity = 70.0,
                 unit = com.medishelf.core.model.QuantityUnit.ML, manufacturer = "Beecham Group plc",
@@ -181,9 +179,7 @@ class MedicineViewModelsTest {
         backgroundScope.launch { vm.uiState.collect {} }
         vm.onFormChange { it.copy(brandName = "My typed name") }
 
-        com.medishelf.core.ui.ScanResultTransfer.put(
-            handle,
-            com.medishelf.core.model.ScanSuggestion(name = "Brufen", strength = "400 mg", expiryDate = java.time.LocalDate.of(2027, 6, 30)),
+        vm.onScanResult(com.medishelf.core.model.ScanSuggestion(name = "Brufen", strength = "400 mg", expiryDate = java.time.LocalDate.of(2027, 6, 30)),
         )
 
         val state = vm.uiState.value
@@ -206,9 +202,7 @@ class MedicineViewModelsTest {
         backgroundScope.launch { vm.uiState.collect {} }
         val dispensed = java.time.LocalDate.of(2026, 1, 12)
 
-        com.medishelf.core.ui.ScanResultTransfer.put(
-            handle,
-            com.medishelf.core.model.ScanSuggestion(
+        vm.onScanResult(com.medishelf.core.model.ScanSuggestion(
                 genericName = "Amoxicillin", patientName = "SARA AHMED", condition = "Ear infection",
                 prescribedBy = "Dr. Hana Saleh", prescriptionDate = dispensed, useWithinDays = 14,
                 storageNote = "Store in a refrigerator (2°C – 8°C).",
